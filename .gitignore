@@ -1,6 +1,0 @@
-build
-dist
-welpwn.egg-info
-*.pyc
-.gitignore
-*/*.pyc
