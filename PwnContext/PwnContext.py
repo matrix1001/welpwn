@@ -33,54 +33,114 @@ def check_alive(pid, name = ''):
     else:
         if p_n:return True
         else:return False
-def io_alive(instance=None):
-    def _io_alive(func):
+        
+
+def change_ld(binary, ld):
+    """
+    Force to use assigned new ld.so by changing the binary
+    """
+    if not ld: return None
+    if not isinstance(binary, ELF):
+        binary = ELF(binary)
+        if not os.access(binary, os.R_OK): 
+                log.failure("Invalid path {} to binary".format(binary))
+                return None
+ 
+    if not os.access(ld, os.R_OK): 
+        log.failure("Invalid path {} to ld".format(ld))
+        return None
+    
+    for segment in self.binary.segments:
+        if segment.header['p_type'] == 'PT_INTERP':
+            size = segment.header['p_memsz']
+            addr = segment.header['p_paddr']
+            data = segment.data()
+            if size <= len(ld):
+                log.failure("Failed to change PT_INTERP from {} to {}".format(data, ld))
+                return None
+            binary.write(addr, ld.ljust(size, '\0'))
+            if not os.access('/tmp/pwn', os.F_OK): os.mkdir('/tmp/pwn')
+            for i in range(255):  #here must be care
+                path = '/tmp/pwn/{}_debug_{}'.format(os.path.basename(self.binary.path), i)
+                if not os.access(path, os.F_OK):
+                    break
+            binary.save(path)    
+            os.chmod(path, 0b111000000) #rwx------
+    success("PT_INTERP has changed from {} to {}. Using temp file {}".format(data, ld, path)) 
+    return path
+
+#wrappers
+def io_wrapper():
+    def _io_wrapper(func):
         '''
-        decorator for check io(process/remote) alive
+        decorator for io
         '''
         name = func.__name__
         doc = func.__doc__
-        def wraper(self, *args, **kargs):
-            if not self.io:
-                log.failure("No io is running when calling <{}>".format(name))
+        def wrapper(self, *args, **kargs):
+            if self.io_sleep: sleep(self.io_sleep)
+            try:
+                return func(self, *args, **kargs)
+            except:
+                log.failure("io {} failed when calling <{}>".format(self.io, name))
                 return None
-            if instance and not isinstance(self.io, instance):
-                log.failure("io is not {} when calling <{}>".format(instance.__name__, name))
-                return None   
-            if isinstance(self.io, process):
-                if not check_alive(self.io.pid):
-                    log.failure("Process io {} has closed when calling <{}>".format(self.io.pid, name))
-                    return None
-                else: return func(self, *args, **kargs)
-            if isinstance(self.io, remote):
-                if not self.io.connected():
-                    log.failure("Remote io {} has closed when calling <{}>".format(self.io.pid, name))
-                    return None
-                else: return func(self, *args, **kargs)
-            log.failure("io {} is not process, nor remote when calling <{}>".format(self.io, name))
-            return None
-        return wraper
-    return _io_alive
+        return wrapper
+    return _io_wrapper
+
+def process_wrapper():
+    def _process_wrapper(func):
+        '''
+        decorator for process
+        '''
+        name = func.__name__
+        doc = func.__doc__
+        def wrapper(self, *args, **kargs):
+            if not isinstance(self.io, process):
+                log.failure("self.io is not a process. failed to use <{}>".format(name))
+                return None
+            if not self.io.connected():
+                log.failure("self.io(process) has been closed. failed to use <{}>".format(name))
+                return None
+            try:
+                return func(self, *args, **kargs)
+            except:
+                log.failure("io {} failed when calling <{}>".format(self.io, name))
+                return None
+        return wrapper
+    return _process_wrapper
+            
+def log_wrapper(log_level = 'info'):
+    def _log_wrapper(func):
+        ''' don't show log '''
+        name = func.__name__
+        doc = func.__doc__
+        def wrapper(self, *args, **kargs):
+            pre_log_level = context.log_level
+            context.log_level = log_level
+            ret_val = func(self, *args, **kargs)
+            content.log_level = pre_log_level
+            return ret_val
+        return wrapper
+    return _log_wrapper
 #-----main code------#
 class PwnContext(object):
     defaults = {
                 'binary':None,
                 'libc':None, 
-                'ld':None,
                 'io':None,
-                'io_sleep':0,
                }
     def __init__(self, binary = '', libc = '', ld = ''):
-        ''' assign binary and libc at first or later , path and ELF supported '''
+        ''' assign binary and libc at first or later , path or ELF supported '''
         self._tls = _Tls_DictStack(_defaultdict(PwnContext.defaults))
         self.binary = binary
         self.libc = libc
+        
+        self.io_sleep = 0
         
     @_validator
     def binary(self, binary):
         """
         Same as context.binary, but set binary for the PwnContext.
-        Arch check enable. context.binary set. 
         """
         if not binary: return None
         if not isinstance(binary, ELF):
@@ -88,18 +148,12 @@ class PwnContext(object):
                 log.failure("Invalid path {} to binary".format(binary))
                 return None
             binary = ELF(binary)
-        if self.libc:
-            if self.libc.arch != binary.arch:
-                log.failure("Binary arch {} does not match libc arch {}.Clean libc".format(self.libc.arch, self.binary.arch))
-                self.libc = None
-                return binary
         context.binary = binary
         return binary
     @_validator
     def libc(self, libc):
         """
-        Similar to context.binary, but set libc for the PwnContext. 
-        Arch check enable. Set this to None to enable using local libc
+        Similar to context.binary, but set libc for the PwnContext. Set this to None to enable using local libc
         """
         if not libc: return None
         if not isinstance(libc, ELF):
@@ -107,48 +161,7 @@ class PwnContext(object):
                 log.failure("Invalid path {} to libc".format(libc))
                 return None
             libc = ELF(libc)
-        if self.binary:
-            if libc.arch != self.binary.arch:
-                log.failure("Libc arch {} does not match binary arch {}. Using default libc".format(self.libc.arch, self.binary.arch))
-                libc = self.binary.libc
         return libc
-    @_validator
-    def ld(self, ld):
-        """
-        Force to use assigned ld.so by changing the binary
-        """
-        if not self.binary:
-            log.failure("Binary must be assigned before assign ld")
-            return None
-        if not ld:
-            if self.binary_path:
-                info("Reset binary. Set libc to None")
-                self.binary = self.binary_path
-                self.libc = ''
-            return None
-        if not os.access(ld, os.R_OK): 
-            log.failure("Invalid path {} to ld".format(ld))
-            return None
-        
-        for segment in self.binary.segments:
-            if segment.header['p_type'] == 'PT_INTERP':
-                size = segment.header['p_memsz']
-                addr = segment.header['p_paddr']
-                data = segment.data()
-                if size <= len(ld):
-                    log.failure("Failed to change PT_INTERP from {} to {}".format(data, ld))
-                    return None
-                self.binary.write(addr, ld.ljust(size, '\0'))
-                if not os.access('/tmp/pwn', os.F_OK): os.mkdir('/tmp/pwn')
-                for i in range(255):  #here must be care
-                    path = '/tmp/pwn/{}_debug_{}'.format(os.path.basename(self.binary.path), i)
-                    if not os.access(path, os.F_OK):
-                        break
-                self.binary.save(path)    
-                os.chmod(path, 0b111000000)
-        success("PT_INTERP has changed from {} to {}. Using temp file {}".format(data, ld, path)) 
-        self.binary = path
-        return ld
     @_validator
     def io(self, io):
         """
@@ -160,31 +173,11 @@ class PwnContext(object):
         if isinstance(io, remote):
             info("Making io by given remote of {}:{}".format(io.rhost, io.rport))
             return io
-        
-        if type(io)==str:
-            # io is the path of the binary
-            info("Making io by process('{}'). Be aware that this method cannot set env".format(io))
-            io = process(io)
-        elif type(io)==tuple or type(io)==list:
-            # io is remote addr
-            info("Making io by remote('{}',{})".format(io[0], io[1]))
-            io = remote(io[0], io[1])
-        else:
-            log.failure("Wrong io {}".format(str(io)))
-            return None
         return io
-    @_validator
-    def io_sleep(self, io_sleep):
-        ''' sleep time (s) before io '''
-        if io_sleep < 0:
-            log.failure("Wrong io_sleep {}, reset to 0".format(io_sleep))
-            io_sleep = 0
-        if io_sleep > 10:
-            log.warn("io_sleep value {} is to high".format(io_sleep))
-        return io_sleep
+
     
+    @process_wrapper()
     @property
-    @io_alive(process)
     def bases(self):
         '''
         get program, libc, heap, stack bases
@@ -207,7 +200,7 @@ class PwnContext(object):
             if m[3] == '[heap]':
                 bases.update({'heap':m[0]})
         return bases
-    @io_alive(process)
+    @process_wrapper()    
     def leak(self, addr, size=0):
         ''' leak memory when io is process '''
         if size == 0:
@@ -216,64 +209,71 @@ class PwnContext(object):
             log.failure("Leaking at {} failed. io is not process".format(addr))
             return 0
         return self.io.leak(addr, size)
-
-    def start(self, dbg_cmd = '', remote_addr = None):
+    @process_wrapper()  
+    def debug(self, gdbscript = None, exe = None, arch = None, ssh = None):
+        return attach(self.io, gdbscript = None, exe = None, arch = None, ssh = None)
+    
+    @log_wrapper('info')
+    def start(self, gdbscript = '', remote_addr = None, env = {}, **kwargs):
         ''' 
             auto start a process, 
-            if dbg_cmd assigned then debug at entry, 
+            if gdbscript assigned then debug at entry, 
             if remote_addr assigned then connect remote server
+            priority: remote > debug > process
         '''
-        log_level = context.log_level
-        context.log_level = 'info'  #avoid debug log when loading
-        # checking if assigned binary.
-        if not self.binary:
-            log.failure("Please assign PwnContext.binary")
-            context.log_level = log_level
-            return False
-        # checking if there is an open io, close it.
+        # checking if there is an open io, then close it.
         if self.io:
             self.io.close()
-        # start local process or connect to remote addr
-        if not remote_addr:
-            if self.libc:
-                preload = {"LD_PRELOAD":self.libc.path}
-            else: 
-                preload = {}
+        # libc setting
+        if not self.libc:
+            progress = log.progress("libc not provided, tring to use default libc".format(remote_addr))
+            if self.binary:
                 if self.binary.libc:
-                    info("Libc not provided, using local libc {}".format(self.binary.libc.path))
-                else:
-                    info("Binary is staticly linked")
-                self.libc = self.binary.libc
-            # debug at entry or not
-            if dbg_cmd:
-                self.io = self.binary.debug(gdbscript = dbg_cmd, env = preload)
+                    progress.success("Using default libc {}".format(self.binary.libc))
+                    self.libc = self.binary.libc
+                else: #static
+                    progress.failure("Binary is staticly linked")
             else:
-                self.io = self.binary.process(env = preload)
+                progress.failure("binary not assigned")
+                
+        if remote_addr:
+            self.io = remote(remote_addr[0], remote_addr[1])
+            return self.io
         else:
-            self.io = remote_addr
-            if not self.libc:
-                log.warn("Pwning remote {} without remote libc, using local libc {}".format(remote_addr, self.binary.libc.path))
-                self.libc = self.binary.libc
-        context.log_level = log_level
+            # checking if assigned binary.
+            if not self.binary:
+                log.failure("Please assign PwnContext.binary")
+                return None
+
+            if self.libc:
+                if "LD_PRELOAD" in env:
+                    env["LD_PRELOAD"] = "{}:{}".format(env["LD_PRELOAD"], self.libc.path)
+                else:
+                    env["LD_PRELOAD"] = self.libc.path
+            # debug at entry or not
+            if gdbscript:
+                self.io = self.binary.debug(gdbscript = gdbscript, env = env, **kwargs)
+            else:
+                self.io = self.binary.process(env = env, **kwargs)
+
         return True
-    @io_alive()
-    def sendline(self, tmp):
-        sleep(self.io_sleep)
-        return self.io.sendline(tmp)
-    @io_alive()
-    def send(self, tmp):
-        sleep(self.io_sleep)
-        return self.io.send(tmp)
-    def recv(self, numb=4096):
-        return self.io.recv(numb)
-    def recvuntil(self, delims):
-        return self.io.recvuntil(delims)
-    @io_alive()
-    def interactive(self):
-        return self.io.interactive()
-    @io_alive(process)  
-    def debug(self, cmd):
-        return attach(self.io, cmd)
+    
+    @io_wrapper()
+    def sendline(self, line = ''):
+        return self.io.sendline(line)
+    @io_wrapper()
+    def send(self, data = ''):
+        return self.io.send(data)
+    @io_wrapper()
+    def recv(self, numb = None, timeout = pwnlib.timeout.Timeout.default):
+        return self.io.recv(numb, timeout)
+    @io_wrapper()
+    def recvuntil(self, delims, drop=False, timeout=pwnlib.timeout.Timeout.default):
+        return self.io.recvuntil(delims, drop, timeout)
+    @io_wrapper()
+    def interactive(self, prompt='\x1b[1m\x1b[31m$\x1b[m '):
+        return self.io.interactive(prompt='\x1b[1m\x1b[31m$\x1b[m ')
+    
 
 
         
@@ -286,21 +286,21 @@ if __name__ == '__main__':
                     )
     
     #-----function for quick script-----#
-    def sl(tmp):
-        return ctx.sendline(tmp)
-    def s(tmp):
-        return ctx.send(tmp)
-    def r(n = 1024):
-        return ctx.recv(n)
-    def ru(tmp):
-        return ctx.recvuntil(tmp)
-    def leak(self, addr, size=4):
-        return ctx.leak(addr, size)
-    def interact():
-        return ctx.interactive()
-    def dbg(cmd = ''):
-        return ctx.debug(cmd)
-    def rs(dbg_cmd = '', remote_addr=None):
-        return ctx.start(dbg_cmd, remote_addr)
+    def sl(*args, **kwargs):
+        return ctx.sendline(*args, **kwargs)
+    def s(*args, **kwargs):
+        return ctx.send(*args, **kwargs)
+    def r(*args, **kwargs):
+        return ctx.recv(*args, **kwargs)
+    def ru(*args, **kwargs):
+        return ctx.recvuntil(*args, **kwargs)
+    def leak(*args, **kwargs):
+        return ctx.leak(*args, **kwargs)
+    def interact(*args, **kwargs):
+        return ctx.interactive(*args, **kwargs)
+    def dbg(*args, **kwargs):
+        return ctx.debug(*args, **kwargs)
+    def rs(*args, **kwargs):
+        return ctx.start(*args, **kwargs)
 
 
