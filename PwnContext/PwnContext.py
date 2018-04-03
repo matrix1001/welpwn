@@ -7,6 +7,13 @@ from os.path import realpath  #because of some problems when using symbolic link
 def pad(size, content = '', alnum = False):
     ''' compatibility for autopwn, generate rubbish pad'''
     return content.ljust(size, 'a')
+
+class Map(object):
+    def __init__(self, start, end, perm, mapname):
+        self.start = start
+        self.end = end
+        self.perm = perm
+        self.mapname = mapname
 def vmmap(pid):
     # this code is converted from vmmap of peda
     maps = []
@@ -21,7 +28,7 @@ def vmmap(pid):
             end = int("0x%s" % end, 16)
             if mapname == "":
                 mapname = "mapped"
-            maps += [(start, end, perm, mapname)]  # this is output format
+            maps.append(Map(start, end, perm, mapname)) # this is output format
     return maps
 def check_alive(pid, name = ''):
     CHECK_ALIVE = "ps -q {} -o comm= "
@@ -39,18 +46,18 @@ def change_ld(binary, ld):
     """
     Force to use assigned new ld.so by changing the binary
     """
-    if not ld: return None
-    if not isinstance(binary, ELF):
-        binary = ELF(binary)
-        if not os.access(binary, os.R_OK): 
-                log.failure("Invalid path {} to binary".format(binary))
-                return None
- 
     if not os.access(ld, os.R_OK): 
         log.failure("Invalid path {} to ld".format(ld))
         return None
-    
-    for segment in self.binary.segments:
+
+        
+    if not isinstance(binary, ELF):
+        if not os.access(binary, os.R_OK): 
+            log.failure("Invalid path {} to binary".format(binary))
+            return None
+        binary = ELF(binary)
+
+    for segment in binary.segments:
         if segment.header['p_type'] == 'PT_INTERP':
             size = segment.header['p_memsz']
             addr = segment.header['p_paddr']
@@ -60,17 +67,17 @@ def change_ld(binary, ld):
                 return None
             binary.write(addr, ld.ljust(size, '\0'))
             if not os.access('/tmp/pwn', os.F_OK): os.mkdir('/tmp/pwn')
-            for i in range(255):  #here must be care
-                path = '/tmp/pwn/{}_debug_{}'.format(os.path.basename(self.binary.path), i)
-                if not os.access(path, os.F_OK):
-                    break
+            path = '/tmp/pwn/{}_debug'.format(os.path.basename(binary.path))
+            if os.access(path, os.F_OK): 
+                os.remove(path)
+                info("Removing exist file {}".format(path))
             binary.save(path)    
             os.chmod(path, 0b111000000) #rwx------
     success("PT_INTERP has changed from {} to {}. Using temp file {}".format(data, ld, path)) 
-    return path
+    return ELF(path)
 
 #wrappers
-def io_wrapper():
+def _io():
     def _io_wrapper(func):
         '''
         decorator for io
@@ -87,7 +94,7 @@ def io_wrapper():
         return wrapper
     return _io_wrapper
 
-def process_wrapper():
+def _process():
     def _process_wrapper(func):
         '''
         decorator for process
@@ -109,7 +116,7 @@ def process_wrapper():
         return wrapper
     return _process_wrapper
             
-def log_wrapper(log_level = 'info'):
+def _log(log_level = 'info'):
     def _log_wrapper(func):
         ''' don't show log '''
         name = func.__name__
@@ -118,24 +125,95 @@ def log_wrapper(log_level = 'info'):
             pre_log_level = context.log_level
             context.log_level = log_level
             ret_val = func(self, *args, **kargs)
-            content.log_level = pre_log_level
+            context.log_level = pre_log_level
             return ret_val
         return wrapper
     return _log_wrapper
 #-----main code------#
+class Symbol(object):
+    def __init__(self, name, addr, typ = 'base', size = 0):
+        self.name = name
+        self.addr = addr
+        self.type = typ
+        self.size = size
+    def __repr__(self):
+        return 'Symbol({}, {}, {}, {})'.format(self.name, hex(self.addr), self.type, hex(self.size))
+    @property
+    def address(self):
+        '''real address'''
+        if not ctx.bases or (self.type == 'base' and not ctx.binary.pie):return self.addr
+        else: return ctx.bases[self.type]+self.addr
+    def leak(self, size = 0):
+        if size == 0 and self.size != 0 :size = self.size
+        else: size = context.bytes
+        '''leak data at its address'''
+        return ctx.leak(self.address, size)
+class SymbolContext(object):
+    defaults = {
+                'symbols':None,
+               }
+    def __init__(self, symbols = {}):
+        self._tls = _Tls_DictStack(_defaultdict(SymbolContext.defaults))
+        self.symbols = symbols
+    def __repr__(self):
+        return str(self.symbols)
+    def __getitem__(self, n):
+        return self.symbols[n]
+        
+    @_validator
+    def symbols(self, symbols):
+        container = []
+        if type(symbols) == dict:
+            for name in symbols:
+                container.append(Symbol(name, symbols[name]))
+        elif type(symbols) == Symbol:
+            container = self.symbols
+            container.append(symbols)
+        elif type(symbols) == list:
+            container = self.symbols
+            for sym in symbols: container.append(sym)
+        return container
+        
+    def remove(self, name):
+        for sym in self.symbols:
+            if sym.name == name:
+                self.symbols.remove(sym)
+                return True
+        return False
+    @property
+    def address(self):
+        address = {}
+        for sym in self.symbols:
+            address[sym.name] = sym.address
+        return address
+    @property
+    def leak(self):
+        leak = {}
+        for sym in self.symbols:
+            leak[sym.name] = sym.leak()
+        return leak
+    @property
+    def gdbscript(self):
+        gdbscript = ''
+        for sym in self.symbols:
+            gdbscript += 'set ${}={}\n'.format(sym.name, hex(sym.address))
+        return gdbscript
+                
 class PwnContext(object):
     defaults = {
                 'binary':None,
                 'libc':None, 
                 'io':None,
                }
-    def __init__(self, binary = '', libc = '', ld = ''):
+    def __init__(self, binary = '', libc = '', io_sleep = 0):
         ''' assign binary and libc at first or later , path or ELF supported '''
         self._tls = _Tls_DictStack(_defaultdict(PwnContext.defaults))
         self.binary = binary
         self.libc = libc
         
-        self.io_sleep = 0
+        self.io_sleep = io_sleep
+    def __repr__(self):
+        return 'PwnContext(binary = {}, libc = {}, io_sleep = {})'.format(self.binary, self.libc, self.io_sleep)
         
     @_validator
     def binary(self, binary):
@@ -174,10 +252,8 @@ class PwnContext(object):
             info("Making io by given remote of {}:{}".format(io.rhost, io.rport))
             return io
         return io
-
-    
-    @process_wrapper()
     @property
+    @_process()
     def bases(self):
         '''
         get program, libc, heap, stack bases
@@ -189,18 +265,18 @@ class PwnContext(object):
                  'stack':0,}
         maps = vmmap(self.io.pid)
         for m in maps[::-1]:   #search backward to ensure getting the base
-            if m[3] == 'mapped':    
-                    bases.update({'mapped':m[0]})
-            if m[3] == realpath(self.libc.path):
-                bases.update({'libc':m[0]})
-            if m[3] == realpath(self.binary.path):
-                bases.update({'base':m[0]})
-            if m[3] == '[stack]':
-                bases.update({'stack':m[0]})
-            if m[3] == '[heap]':
-                bases.update({'heap':m[0]})
+            if m.mapname == 'mapped':    
+                bases['mapped'] = m.start
+            if m.mapname == realpath(self.libc.path):
+                bases['libc'] = m.start
+            if m.mapname == realpath(self.binary.path):
+                bases['base'] = m.start
+            if m.mapname == '[stack]':
+                bases['stack'] = m.start
+            if m.mapname == '[heap]':
+                bases['heap'] = m.start
         return bases
-    @process_wrapper()    
+    @_process()   
     def leak(self, addr, size=0):
         ''' leak memory when io is process '''
         if size == 0:
@@ -209,11 +285,12 @@ class PwnContext(object):
             log.failure("Leaking at {} failed. io is not process".format(addr))
             return 0
         return self.io.leak(addr, size)
-    @process_wrapper()  
-    def debug(self, gdbscript = None, exe = None, arch = None, ssh = None):
-        return attach(self.io, gdbscript = None, exe = None, arch = None, ssh = None)
     
-    @log_wrapper('info')
+    @_process() 
+    def debug(self, gdbscript = '', exe = None, arch = None, ssh = None):
+        return attach(self.io, gdbscript, exe, arch, ssh)
+    
+    @_log('info')
     def start(self, gdbscript = '', remote_addr = None, env = {}, **kwargs):
         ''' 
             auto start a process, 
@@ -258,49 +335,18 @@ class PwnContext(object):
 
         return True
     
-    @io_wrapper()
-    def sendline(self, line = ''):
-        return self.io.sendline(line)
-    @io_wrapper()
-    def send(self, data = ''):
-        return self.io.send(data)
-    @io_wrapper()
-    def recv(self, numb = None, timeout = pwnlib.timeout.Timeout.default):
-        return self.io.recv(numb, timeout)
-    @io_wrapper()
-    def recvuntil(self, delims, drop=False, timeout=pwnlib.timeout.Timeout.default):
-        return self.io.recvuntil(delims, drop, timeout)
-    @io_wrapper()
-    def interactive(self, prompt='\x1b[1m\x1b[31m$\x1b[m '):
-        return self.io.interactive(prompt='\x1b[1m\x1b[31m$\x1b[m ')
+    
+    def __getattr__(self, attr):
+        '''use ctx.io by default'''
+        if hasattr(self.io, attr):
+            @_io
+            def call(*args, **kwargs):
+                return self.io.__getattribute__(attr)(*args, **kwargs)
+            return call
     
 
 
-        
-if __name__ == '__main__':        
-    context.terminal = ['tmux', 'splitw', '-h']  # I always use tmux
-
-    ctx = PwnContext(
-                    binary = '', 
-                    libc = '', 
-                    )
-    
-    #-----function for quick script-----#
-    def sl(*args, **kwargs):
-        return ctx.sendline(*args, **kwargs)
-    def s(*args, **kwargs):
-        return ctx.send(*args, **kwargs)
-    def r(*args, **kwargs):
-        return ctx.recv(*args, **kwargs)
-    def ru(*args, **kwargs):
-        return ctx.recvuntil(*args, **kwargs)
-    def leak(*args, **kwargs):
-        return ctx.leak(*args, **kwargs)
-    def interact(*args, **kwargs):
-        return ctx.interactive(*args, **kwargs)
-    def dbg(*args, **kwargs):
-        return ctx.debug(*args, **kwargs)
-    def rs(*args, **kwargs):
-        return ctx.start(*args, **kwargs)
+ctx = PwnContext()
+sym_ctx = SymbolContext()                
 
 
