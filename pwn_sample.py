@@ -4,9 +4,11 @@ if __name__ == '__main__':
     context.log_level = 'debug'
     #-----function for quick script-----#
     def sl(*args, **kwargs):
-        return ctx.sendline(*args, **kwargs)
+        new_args = [str(_) for _ in args]
+        return ctx.sendline(*new_args, **kwargs)
     def s(*args, **kwargs):
-        return ctx.send(*args, **kwargs)
+        new_args = [str(_) for _ in args]
+        return ctx.send(*new_args, **kwargs)
     def r(*args, **kwargs):
         return ctx.recv(*args, **kwargs)
     def ru(*args, **kwargs):
@@ -15,17 +17,32 @@ if __name__ == '__main__':
         return ctx.leak(*args, **kwargs)
     def interact(*args, **kwargs):
         return ctx.interactive(*args, **kwargs)
-    def dbg(*args, **kwargs):
-        return ctx.debug(*args, **kwargs)
+    def dbg(gdbscript='', *args, **kwargs):
+        gdbscript = sym_ctx.gdbscript + gdbscript
+        return ctx.debug(gdbscript, *args, **kwargs)
     def rs(*args, **kwargs):
         return ctx.start(*args, **kwargs)
         
         
-    ctx.binary = './pwn'
-    ctx.libc = './libc.so.6'
-    sym_ctx.symbols = {'name1':0x1234,
-                       'name2':0x4567}
-    sym_ctx.symbols = Symbol('name3', 0xdeadbeef, 'libc', 12)
+    ctx.binary = './opm'
+    sym_ctx.structs['role'] = '''
+struct role{
+    void *(func);
+    char *name;
+    long long name_len;
+    int punches;
+};
+'''
+    sym_ctx.symbols = [
+    Symbol('ptr_lst', 0x2020e0, typ=10, ptr_array=True, struct_name='role'),
+    Symbol('role_num', 0x202130, typ='raw'),
+    Symbol('a_ptr', 0x2020e0, typ='ptr', struct_name='role')
+    ]
     
-    rs(env = {'LD_PRELOAD':'./libc.so.6'})
-    dbg(sym_ctx.gdbscript+'c')
+    rs()
+    sl('A'); sl('aaaa'); sl('100');
+    sl('A'); sl('bbbb'); sl('100');
+    sl('A'); sl('cccc'); sl('100');
+    sl('A'); sl('dddd'); sl('100');
+    sl('A'); sl('eeee'); sl('100');
+    dbg()
