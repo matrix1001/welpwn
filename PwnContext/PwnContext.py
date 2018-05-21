@@ -85,12 +85,12 @@ def _io():
         '''
         name = func.__name__
         doc = func.__doc__
-        def wrapper(self, *args, **kargs):
-            if self.io_sleep: sleep(self.io_sleep)
+        def wrapper(*args, **kargs):
+            if ctx.io_sleep: sleep(ctx.io_sleep)
             try:
-                return func(self, *args, **kargs)
+                return func(*args, **kargs)
             except:
-                log.failure("io {} failed when calling <{}>".format(self.io, name))
+                log.failure("io {} failed when calling <{}>".format(ctx.io, name))
                 return None
         return wrapper
     return _io_wrapper
@@ -131,75 +131,7 @@ def _log(log_level = 'info'):
         return wrapper
     return _log_wrapper
 #-----main code------#
-class Symbol(object):
-    def __init__(self, name, addr, typ = 'base', size = 0):
-        self.name = name
-        self.addr = addr
-        self.type = typ
-        self.size = size
-    def __repr__(self):
-        return 'Symbol({}, {}, {}, {})'.format(self.name, hex(self.addr), self.type, hex(self.size))
-    @property
-    def address(self):
-        '''real address'''
-        if not ctx.bases or (self.type == 'base' and not ctx.binary.pie):return self.addr
-        else: return ctx.bases[self.type]+self.addr
-    def leak(self, size = 0):
-        if size == 0 and self.size != 0 :size = self.size
-        else: size = context.bytes
-        '''leak data at its address'''
-        return ctx.leak(self.address, size)
-class SymbolContext(object):
-    defaults = {
-                'symbols':None,
-               }
-    def __init__(self, symbols = {}):
-        self._tls = _Tls_DictStack(_defaultdict(SymbolContext.defaults))
-        self.symbols = symbols
-    def __repr__(self):
-        return str(self.symbols)
-    def __getitem__(self, n):
-        return self.symbols[n]
-        
-    @_validator
-    def symbols(self, symbols):
-        container = []
-        if type(symbols) == dict:
-            for name in symbols:
-                container.append(Symbol(name, symbols[name]))
-        elif type(symbols) == Symbol:
-            container = self.symbols
-            container.append(symbols)
-        elif type(symbols) == list:
-            container = self.symbols
-            for sym in symbols: container.append(sym)
-        return container
-        
-    def remove(self, name):
-        for sym in self.symbols:
-            if sym.name == name:
-                self.symbols.remove(sym)
-                return True
-        return False
-    @property
-    def address(self):
-        address = {}
-        for sym in self.symbols:
-            address[sym.name] = sym.address
-        return address
-    @property
-    def leak(self):
-        leak = {}
-        for sym in self.symbols:
-            leak[sym.name] = sym.leak()
-        return leak
-    @property
-    def gdbscript(self):
-        gdbscript = ''
-        for sym in self.symbols:
-            gdbscript += 'set ${}={}\n'.format(sym.name, hex(sym.address))
-        return gdbscript
-                
+               
 class PwnContext(object):
     defaults = {
                 'binary':None,
@@ -340,7 +272,7 @@ class PwnContext(object):
     def __getattr__(self, attr):
         '''use ctx.io by default'''
         if hasattr(self.io, attr):
-            @_io
+            @_io()
             def call(*args, **kwargs):
                 return self.io.__getattribute__(attr)(*args, **kwargs)
             return call
@@ -348,6 +280,6 @@ class PwnContext(object):
 
 
 ctx = PwnContext()
-sym_ctx = SymbolContext()                
+               
 
 
