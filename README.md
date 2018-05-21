@@ -55,7 +55,7 @@ output:
 libc is automaticly loaded as `ctx.libc` if you did not assign it before.
 - connect a remote server
 ```python
-ctx.start(remote_addr = 'localhost', 2333)
+ctx.start(remote_addr = ('localhost', 2333))
 ```
 output:
 ```
