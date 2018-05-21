@@ -1,7 +1,7 @@
 # Introduction
 matrix's pwn framework.
 
-if u got any problem, read the code and try solve it on ur own.
+if u got any problem, read the code and try to solve it on ur own.
 # Install
 You need to install pwntools first.
 
