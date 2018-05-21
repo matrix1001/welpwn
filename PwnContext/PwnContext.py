@@ -15,6 +15,8 @@ class Map(object):
         self.end = end
         self.perm = perm
         self.mapname = mapname
+    def __repr__():
+        return 'Map({}, {}, {}, {})'.format(mapname, hex(start), hex(end), perm)
 def vmmap(pid):
     # this code is converted from vmmap of peda
     maps = []
@@ -87,11 +89,7 @@ def _io():
         doc = func.__doc__
         def wrapper(*args, **kargs):
             if ctx.io_sleep: sleep(ctx.io_sleep)
-            try:
-                return func(*args, **kargs)
-            except:
-                log.failure("io {} failed when calling <{}>".format(ctx.io, name))
-                return None
+            return func(*args, **kargs)
         return wrapper
     return _io_wrapper
 
@@ -109,11 +107,9 @@ def _process():
             if not self.io.connected():
                 log.failure("self.io(process) has been closed. failed to use <{}>".format(name))
                 return None
-            try:
-                return func(self, *args, **kargs)
-            except:
-                log.failure("io {} failed when calling <{}>".format(self.io, name))
-                return None
+            
+            return func(self, *args, **kargs)
+
         return wrapper
     return _process_wrapper
             
@@ -178,12 +174,6 @@ class PwnContext(object):
         """
         process or remote
         """
-        if isinstance(io, process):
-            info("Making io by given process of {}".format(io.display))
-            return io
-        if isinstance(io, remote):
-            info("Making io by given remote of {}:{}".format(io.rhost, io.rport))
-            return io
         return io
     @property
     @_process()
@@ -260,6 +250,7 @@ class PwnContext(object):
                     env["LD_PRELOAD"] = "{}:{}".format(env["LD_PRELOAD"], self.libc.path)
                 else:
                     env["LD_PRELOAD"] = self.libc.path
+                log.info("env={}".format(env))
             # debug at entry or not
             if gdbscript:
                 self.io = self.binary.debug(gdbscript = gdbscript, env = env, **kwargs)
