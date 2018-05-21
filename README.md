@@ -59,7 +59,7 @@ ctx.start(remote_addr = 'localhost', 2333)
 ```
 output:
 ```
-[*] Stopped process '/root/share/ctfgames/rctf18/babyheap/babyheap' (pid 9185)
+[*] Stopped process '~/pwn/babyheap' (pid 9185)
 [x] Opening connection to localhost on port 2333
 [x] Opening connection to localhost on port 2333: Trying ::1
 [x] Opening connection to localhost on port 2333: Trying 127.0.0.1
