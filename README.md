@@ -55,7 +55,7 @@ output:
 libc is automaticly loaded as `ctx.libc` if you did not assign it before.
 - connect a remote server
 ```python
-ctx.remote(remote_addr = 'localhost', 2333)
+ctx.start(remote_addr = 'localhost', 2333)
 ```
 output:
 ```
@@ -82,5 +82,7 @@ output:
 choice:
 ```
 just use ctx as usual. all io commands in pwntools are supported.
+- more
+read the code!
 # Documention
 TODO
