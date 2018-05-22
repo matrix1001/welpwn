@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='welpwn',
-    version='0.6',
+    version='0.7',
     description='Designed for eliminating dull work while pwning',
     license='GPL',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),

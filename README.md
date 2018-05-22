@@ -13,6 +13,7 @@ You need to install pwntools first.
 
 `python setup.py install`
 # Usage
+## Basic
 At first, you should import PwnContext.
 ```python
 from PwnContext import *
@@ -82,8 +83,15 @@ output:
 choice:
 ```
 just use ctx as usual. all io commands in pwntools are supported.
+## Debug
+- TODO
 - more
 
 read the code!
 # Documention
 TODO
+# Update Log
+## 2018/5/22 Version 0.7
+- move some auxiliary functions in PwnContext.py to auxiliary.py
+- add one_gadget supported
+- add runable example (babyheap)
