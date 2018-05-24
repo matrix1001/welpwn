@@ -1,4 +1,5 @@
 from pwn import *
+import inspect
 #-----extra function------#
 def pad(size, content = '', alnum = False):
     ''' compatibility for autopwn, generate rubbish pad'''
@@ -73,7 +74,24 @@ def change_ld(binary, ld):
             os.chmod(path, 0b111000000) #rwx------
     log.success("PT_INTERP has changed from {} to {}. Using temp file {}".format(data, ld, path)) 
     return ELF(path)
+
+LIBCDB_PATH = '/root/Desktop/libc-database'    
+def libc_search(query, select=0):
+    '''query should be a dick like {'printf':0x6b0, ......}'''
+    args = ''
+    for name in query:
+        args += '{} {} '.format(name, hex(query[name]))
+    p = os.popen('{}/find {}'.format(LIBCDB_PATH, args))
+    result = p.readlines()
+    if len(result)==0:
+        log.failure('Unable to find libc with libc-database')
+        return None
+    if (select==0 and len(result)>1) or select>=len(result):
+        select = ui.options('choose a possible libc', result)
     
+    libc_path = '{}/db/{}.so'.format(LIBCDB_PATH, result[select].split()[2][:-1])
+    return ELF(libc_path)
+        
     
 def one_gadgets(binary, offset=0):
     if isinstance(binary, ELF):
@@ -85,8 +103,18 @@ def one_gadgets(binary, offset=0):
         data = r.read()
         if data:
             gadgets = [int(_)+offset for _ in data.split()]
-            log.success("dump one_gadgets from {} with offset {} : {}".format(binary, hex(offset), gadgets))
+            log.success("dump one_gadgets from {} with offset {} :\n\t {}".format(binary, hex(offset), [hex(_) for _ in gadgets]))
             return gadgets
         else:
             log.failure("dump one_gadgets from {} failed".format(binary))
             return []
+            
+def instruction_log(arg=0):
+    def _log_wrapper(func):
+        def wrapper(*args, **kargs):
+            stack = inspect.stack()
+            log.info('{}:{}'.format(stack[1][2], stack[1][4][0]))
+            ret_val = func(*args, **kargs)
+            return ret_val
+        return wrapper
+    return _log_wrapper
