@@ -1,7 +1,7 @@
 from PwnContext import *
 if __name__ == '__main__':        
     context.terminal = ['tmux', 'splitw', '-h']  # I always use tmux
-    context.log_level = 'debug'
+    context.log_level = 'info'
     #-----function for quick script-----#
     s       = lambda data               :ctx.send(str(data))        #in case that data is a int
     sa      = lambda delim,data         :ctx.sendafter(str(delim), str(data)) 
@@ -22,19 +22,19 @@ if __name__ == '__main__':
     uu32    = lambda data   :u32(data.ljust(4, '\0'))
     uu64    = lambda data   :u64(data.ljust(8, '\0'))
 
-    
+    @instruction_log()
     def alloc(size, content):
         sl(1)
         ru('size')
         sl(size)
         ru('content')
         s(content)
-        
+    @instruction_log()    
     def show(ind):
         sl(2)
         ru('ind')
         sl(ind)
-     
+    @instruction_log() 
     def delete(ind):
         sl(3)
         ru('ind')
