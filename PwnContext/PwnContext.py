@@ -38,20 +38,7 @@ def _process():
 
         return wrapper
     return _process_wrapper
-            
-def _log(log_level = 'info'):
-    def _log_wrapper(func):
-        ''' don't show log '''
-        name = func.__name__
-        doc = func.__doc__
-        def wrapper(self, *args, **kargs):
-            pre_log_level = context.log_level
-            context.log_level = log_level
-            ret_val = func(self, *args, **kargs)
-            context.log_level = pre_log_level
-            return ret_val
-        return wrapper
-    return _log_wrapper
+
 #-----main code------#
                
 class PwnContext(object):
@@ -69,7 +56,7 @@ class PwnContext(object):
         self.io_sleep = io_sleep
     def __repr__(self):
         return 'PwnContext(binary = {}, libc = {}, io_sleep = {})'.format(self.binary, self.libc, self.io_sleep)
-        
+    
     @_validator
     def binary(self, binary):
         """
@@ -83,6 +70,7 @@ class PwnContext(object):
             binary = ELF(binary)
         context.binary = binary
         return binary
+
     @_validator
     def libc(self, libc):
         """
@@ -100,6 +88,9 @@ class PwnContext(object):
         """
         process or remote
         """
+        if not isinstance(io, process) and not isinstance(io, remote):
+            log.failure("Invalid io {}".format(io))
+            return None
         return io
     @property
     @_process()
@@ -130,16 +121,13 @@ class PwnContext(object):
         ''' leak memory when io is process '''
         if size == 0:
             size = context.bytes
-        if not isinstance(self.io, process):
-            log.failure("Leaking at {} failed. io is not process".format(addr))
-            return 0
         return self.io.leak(addr, size)
     
     @_process() 
     def debug(self, gdbscript = '', exe = None, arch = None, ssh = None):
         return attach(self.io, gdbscript, exe, arch, ssh)
     
-    @_log('info')
+
     def start(self, gdbscript = '', remote_addr = None, env = {}, **kwargs):
         ''' 
             auto start a process, 
