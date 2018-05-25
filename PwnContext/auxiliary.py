@@ -78,19 +78,24 @@ def change_ld(binary, ld):
 LIBCDB_PATH = '/root/Desktop/libc-database'    
 def libc_search(query, select=0):
     '''query should be a dick like {'printf':0x6b0, ......}'''
+    cwd = os.getcwd()
+    os.chdir(LIBCDB_PATH)
     args = ''
     for name in query:
         args += '{} {} '.format(name, hex(query[name]))
-    p = os.popen('{}/find {}'.format(LIBCDB_PATH, args))
+    p = os.popen('./find {}'.format(args))
     result = p.readlines()
     if len(result)==0:
         log.failure('Unable to find libc with libc-database')
-        return None
+        os.chdir(cwd)
+        #return None
     if (select==0 and len(result)>1) or select>=len(result):
         select = ui.options('choose a possible libc', result)
     
-    libc_path = '{}/db/{}.so'.format(LIBCDB_PATH, result[select].split()[2][:-1])
-    return ELF(libc_path)
+    libc_path = './db/{}.so'.format(result[select].split()[2][:-1])
+    e = ELF(libc_path)
+    os.chdir(cwd)
+    return e
         
     
 def one_gadgets(binary, offset=0):
@@ -102,8 +107,11 @@ def one_gadgets(binary, offset=0):
         r = os.popen("one_gadget -r {}".format(binary))
         data = r.read()
         if data:
-            gadgets = [int(_)+offset for _ in data.split()]
-            log.success("dump one_gadgets from {} with offset {} :\n\t {}".format(binary, hex(offset), [hex(_) for _ in gadgets]))
+            gadgets = [int(_) for _ in data.split()]
+            log.success("dump one_gadgets from {} : {}".format(binary, gadgets))
+            if offset:
+                log.info("add offset {} to gadgets".format(offset))
+                gadgets = [_+offset for _ in gadgets]
             return gadgets
         else:
             log.failure("dump one_gadgets from {} failed".format(binary))

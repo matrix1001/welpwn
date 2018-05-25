@@ -160,7 +160,7 @@ class PwnContext(object):
                 return None
 
             if self.libc:
-                if "LD_PRELOAD" in env:
+                if "LD_PRELOAD" in env and self.libc.path not in env["LD_PRELOAD"]:
                     env["LD_PRELOAD"] = "{}:{}".format(env["LD_PRELOAD"], self.libc.path)
                 else:
                     env["LD_PRELOAD"] = self.libc.path
