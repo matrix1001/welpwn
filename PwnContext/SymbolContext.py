@@ -15,7 +15,7 @@ class Symbol(object):
         else: self.struct_name = struct_name
         
     def __repr__(self):
-        return 'Symbol({}, {}, {}, {})'.format(self.name, hex(self.addr), self.loc, hex(self.size))
+        return 'Symbol("{}", {}, "{}", {})'.format(self.name, hex(self.addr), self.loc, hex(self.size))
     @property
     def address(self):
         '''real address'''

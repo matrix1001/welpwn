@@ -12,7 +12,7 @@ class Map(object):
         self.perm = perm
         self.mapname = mapname
     def __repr__(self):
-        return 'Map({}, {}, {}, {})'.format(self.mapname, hex(self.start), hex(self.end), self.perm)
+        return 'Map("{}", {}, {}, "{}")'.format(self.mapname, hex(self.start), hex(self.end), self.perm)
 def vmmap(pid):
     # this code is converted from vmmap of peda
     maps = []
