@@ -98,15 +98,27 @@ def libc_search(query, select=0):
     return e
         
     
-def one_gadgets(binary, offset=0):
+def one_gadgets(binary, offset=0, cache=True):
     if isinstance(binary, ELF):
         binary = binary.path
+    cache = "./.onegadget-{}".format(os.path.basename(binary))
+    if os.access(cache, os.R_OK) and cache:
+        log.success("using cached gadgets {}".format(cache))
+        with open(cache, 'r') as f:
+            gadgets = [int(_) for _ in f.read().split()]
+            if offset:
+                log.info("add offset {} to gadgets".format(offset))
+                gadgets = [_+offset for _ in gadgets]
+            return gadgets
     if not os.access(binary, os.R_OK):
         log.failure("Invalid path {} to binary".format(binary))
     else:
         r = os.popen("one_gadget -r {}".format(binary))
         data = r.read()
         if data:
+            if cache:
+                with open(cache, 'w') as f:
+                    f.write(data)
             gadgets = [int(_) for _ in data.split()]
             log.success("dump one_gadgets from {} : {}".format(binary, gadgets))
             if offset:
