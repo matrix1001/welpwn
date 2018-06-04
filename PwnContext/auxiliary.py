@@ -98,11 +98,21 @@ def libc_search(query, select=0):
     return e
         
     
-def one_gadgets(binary, offset=0, cache=True):
+def one_gadgets(binary, offset=0, use_cache=True):
+    HOME = os.path.expanduser('~')
+    ONE_DIR = '{}/.one_gadgets'.format(HOME)
     if isinstance(binary, ELF):
         binary = binary.path
-    cache = "./.onegadget-{}".format(os.path.basename(binary))
-    if os.access(cache, os.R_OK) and cache:
+    if not os.access(ONE_DIR, os.F_OK):os.mkdir(ONE_DIR)
+     
+    if not os.access(binary, os.R_OK):
+        log.failure("Invalid path {} to binary".format(binary))
+        return []
+    
+    sha1 = sha1filehex(binary)
+    cache = "{}/{}".format(ONE_DIR, sha1)
+    
+    if os.access(cache, os.R_OK) and use_cache:
         log.success("using cached gadgets {}".format(cache))
         with open(cache, 'r') as f:
             gadgets = [int(_) for _ in f.read().split()]
@@ -110,16 +120,16 @@ def one_gadgets(binary, offset=0, cache=True):
                 log.info("add offset {} to gadgets".format(offset))
                 gadgets = [_+offset for _ in gadgets]
             return gadgets
-    if not os.access(binary, os.R_OK):
-        log.failure("Invalid path {} to binary".format(binary))
+
     else:
-        r = os.popen("one_gadget -r {}".format(binary))
-        data = r.read()
-        if data:
-            if cache:
+        p = subprocess.Popen(["one_gadget", "-r",  binary], stdout=PIPE, stderr=PIPE)
+        ret_code = p.wait()
+        st_o, st_e = p.communicate()
+        if ret_code == 0:
+            if use_cache:
                 with open(cache, 'w') as f:
-                    f.write(data)
-            gadgets = [int(_) for _ in data.split()]
+                    f.write(st_o)
+            gadgets = [int(_) for _ in st_o.split()]
             log.success("dump one_gadgets from {} : {}".format(binary, gadgets))
             if offset:
                 log.info("add offset {} to gadgets".format(offset))
@@ -127,6 +137,7 @@ def one_gadgets(binary, offset=0, cache=True):
             return gadgets
         else:
             log.failure("dump one_gadgets from {} failed".format(binary))
+            log.info("error msg:\n"+st_e)
             return []
             
 def instruction_log(arg=0):
