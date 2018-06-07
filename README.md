@@ -114,25 +114,26 @@ result:
 
 now we print a full vmmap
 
-[Map(/bin/dash, 0x559169ba4000, 0x559169bbf000, r-xp),
- Map(/bin/dash, 0x559169dbe000, 0x559169dc0000, r--p),
- Map(/bin/dash, 0x559169dc0000, 0x559169dc1000, rw-p),
- Map(mapped, 0x559169dc1000, 0x559169dc3000, rw-p),
- Map([heap], 0x55916acd4000, 0x55916acf5000, rw-p),
- Map(/lib/x86_64-linux-gnu/libc-2.25.so, 0x7f2f1dd14000, 0x7f2f1dead000, r-xp),
- Map(/lib/x86_64-linux-gnu/libc-2.25.so, 0x7f2f1dead000, 0x7f2f1e0ad000, ---p),
- Map(/lib/x86_64-linux-gnu/libc-2.25.so, 0x7f2f1e0ad000, 0x7f2f1e0b1000, r--p),
- Map(/lib/x86_64-linux-gnu/libc-2.25.so, 0x7f2f1e0b1000, 0x7f2f1e0b3000, rw-p),
- Map(mapped, 0x7f2f1e0b3000, 0x7f2f1e0b7000, rw-p),
- Map(/lib/x86_64-linux-gnu/ld-2.25.so, 0x7f2f1e0b7000, 0x7f2f1e0da000, r-xp),
- Map(mapped, 0x7f2f1e2d7000, 0x7f2f1e2d9000, rw-p),
- Map(/lib/x86_64-linux-gnu/ld-2.25.so, 0x7f2f1e2d9000, 0x7f2f1e2da000, r--p),
- Map(/lib/x86_64-linux-gnu/ld-2.25.so, 0x7f2f1e2da000, 0x7f2f1e2db000, rw-p),
- Map(mapped, 0x7f2f1e2db000, 0x7f2f1e2dc000, rw-p),
- Map([stack], 0x7ffe3eeb7000, 0x7ffe3eed8000, rw-p),
- Map([vvar], 0x7ffe3ef10000, 0x7ffe3ef13000, r--p),
- Map([vdso], 0x7ffe3ef13000, 0x7ffe3ef15000, r-xp),
- Map([vsyscall], 0xffffffffff600000, 0xffffffffff601000, r-xp)]
+[Map("/bin/dash", 0x556232cf5000, 0x556232d10000, "r-xp"),
+ Map("/bin/dash", 0x556232f0f000, 0x556232f11000, "r--p"),
+ Map("/bin/dash", 0x556232f11000, 0x556232f12000, "rw-p"),
+ Map("mapped", 0x556232f12000, 0x556232f14000, "rw-p"),
+ Map("[heap]", 0x556234407000, 0x556234428000, "rw-p"),
+ Map("/lib/x86_64-linux-gnu/libc-2.25.so", 0x7f4ca8588000, 0x7f4ca8721000, "r-xp"),
+ Map("/lib/x86_64-linux-gnu/libc-2.25.so", 0x7f4ca8721000, 0x7f4ca8921000, "---p"),
+ Map("/lib/x86_64-linux-gnu/libc-2.25.so", 0x7f4ca8921000, 0x7f4ca8925000, "r--p"),
+ Map("/lib/x86_64-linux-gnu/libc-2.25.so", 0x7f4ca8925000, 0x7f4ca8927000, "rw-p"),
+ Map("mapped", 0x7f4ca8927000, 0x7f4ca892b000, "rw-p"),
+ Map("/lib/x86_64-linux-gnu/ld-2.25.so", 0x7f4ca892b000, 0x7f4ca894e000, "r-xp"),
+ Map("mapped", 0x7f4ca8b4b000, 0x7f4ca8b4d000, "rw-p"),
+ Map("/lib/x86_64-linux-gnu/ld-2.25.so", 0x7f4ca8b4d000, 0x7f4ca8b4e000, "r--p"),
+ Map("/lib/x86_64-linux-gnu/ld-2.25.so", 0x7f4ca8b4e000, 0x7f4ca8b4f000, "rw-p"),
+ Map("mapped", 0x7f4ca8b4f000, 0x7f4ca8b50000, "rw-p"),
+ Map("[stack]", 0x7fff36a24000, 0x7fff36a45000, "rw-p"),
+ Map("[vvar]", 0x7fff36ad0000, 0x7fff36ad3000, "r--p"),
+ Map("[vdso]", 0x7fff36ad3000, 0x7fff36ad5000, "r-xp"),
+ Map("[vsyscall]", 0xffffffffff600000, 0xffffffffff601000, "r-xp")]
+
 ```
 ### Pre-brute-force
 And there's something you may be interested if you have done some challenges about brute force.Let me show you how to do pre-brute-force before exploit(local debug). If you want to brute force heap, you will need to call malloc first.
@@ -225,14 +226,15 @@ print vmmap(ctx.io.pid) #now we have loaded a libc-2.26 which is different from 
 result:
 ```
 ......
-[
-......
- Map(/tmp/libc-2.26.so, 0x7f1b12c14000, 0x7f1b12dbb000, r-xp),
- Map(/tmp/libc-2.26.so, 0x7f1b12dbb000, 0x7f1b12fba000, ---p),
- Map(/tmp/libc-2.26.so, 0x7f1b12fba000, 0x7f1b12fbe000, r--p),
- Map(/tmp/libc-2.26.so, 0x7f1b12fbe000, 0x7f1b12fc0000, rw-p),
-......
-]
+[......
+ ......
+ Map("/tmp/pwn/libc-2.26.so", 0x7f883edc7000, 0x7f883ef6e000, "r-xp"),
+ Map("/tmp/pwn/libc-2.26.so", 0x7f883ef6e000, 0x7f883f16d000, "---p"),
+ Map("/tmp/pwn/libc-2.26.so", 0x7f883f16d000, 0x7f883f171000, "r--p"),
+ Map("/tmp/pwn/libc-2.26.so", 0x7f883f171000, 0x7f883f173000, "rw-p"),
+ ......
+ ......]
+
 ```
 !!caution!!!
 
@@ -242,10 +244,15 @@ one_gadget support(you have to install one_gadget first)
 ```python
 from PwnContext import *
 print one_gadgets('/lib/x86_64-linux-gnu/libc.so.6')
+print 'now we run it again.it will use cache to speed up'
+print one_gadgets('/lib/x86_64-linux-gnu/libc.so.6')
 ```
 result:
 ```
 [+] dump one_gadgets from /lib/x86_64-linux-gnu/libc.so.6 : [265195, 265279, 891189]
+[265195, 265279, 891189]
+now we run it again.it will use cache to speed up
+[+] using cached gadgets /root/.one_gadgets/7fb8b29b6dafb0ffe252eba2b54c5781bc6f3e99
 [265195, 265279, 891189]
 ```
 ### libc-database
@@ -260,7 +267,25 @@ result:
 ```
 ELF('/root/Desktop/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 ```
+### instruction_log
+this is a wrapper to log method. it's usefull to track your code, especially when there's something wrong.
+```python
+from PwnContext import *
+@instruction_log()
+def test_function(*args, **kwargs):
+    print 'from method:',args, kwargs
 
+test_function('test', 1, 2, 3, a=1)
+test_function('test2', b=0)
+```
+result:
+```
+[*] 6:test_function('test', 1, 2, 3, a=1)
+from method: ('test', 1, 2, 3) {'a': 1}
+[*] 7:test_function('test2', b=0)
+from method: ('test2',) {'b': 0}
+```
+now you must have noticed that instruction_log shows your code and its line number.if you still don't understand this, check `example/babyheap`.
 ## More
 read the code!
 # Documention
