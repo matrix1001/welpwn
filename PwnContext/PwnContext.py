@@ -171,7 +171,7 @@ class PwnContext(object):
             else:
                 self.io = self.binary.process(env = env, **kwargs)
 
-        return True
+        return self.io
     
     
     def __getattr__(self, attr):
