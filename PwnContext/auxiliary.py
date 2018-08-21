@@ -77,7 +77,7 @@ def change_ld(binary, ld):
 
 LIBCDB_PATH = '/root/Desktop/libc-database'    
 def libc_search(query, select=0):
-    '''query should be a dick like {'printf':0x6b0, ......}'''
+    '''query should be a dict like {'printf':0x6b0, ......}'''
     cwd = os.getcwd()
     os.chdir(LIBCDB_PATH)
     args = ''
@@ -88,14 +88,15 @@ def libc_search(query, select=0):
     if len(result)==0:
         log.failure('Unable to find libc with libc-database')
         os.chdir(cwd)
-        #return None
-    if (select==0 and len(result)>1) or select>=len(result):
+        return None
+        
+    elif (select==0 and len(result)>1) or select>=len(result):
         select = ui.options('choose a possible libc', result)
     
-    libc_path = './db/{}.so'.format(result[select].split()[2][:-1])
-    e = ELF(libc_path)
-    os.chdir(cwd)
-    return e
+        libc_path = './db/{}.so'.format(result[select].split()[2][:-1])
+        e = ELF(libc_path)
+        os.chdir(cwd)
+        return e
         
     
 def one_gadgets(binary, offset=0, use_cache=True):
