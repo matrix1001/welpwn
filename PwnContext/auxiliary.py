@@ -82,17 +82,17 @@ def libc_search(query, select=0):
     os.chdir(LIBCDB_PATH)
     args = ''
     for name in query:
-        args += '{} {} '.format(name, hex(query[name]))
+        args += '{} {} '.format(name, hex(query[name])[2:])
     p = os.popen('./find {}'.format(args))
     result = p.readlines()
     if len(result)==0:
         log.failure('Unable to find libc with libc-database')
         os.chdir(cwd)
         return None
+    else:
+        if (select==0 and len(result)>1) or select>=len(result):
+            select = ui.options('choose a possible libc', result)
         
-    elif (select==0 and len(result)>1) or select>=len(result):
-        select = ui.options('choose a possible libc', result)
-    
         libc_path = './db/{}.so'.format(result[select].split()[2][:-1])
         e = ELF(libc_path)
         os.chdir(cwd)
