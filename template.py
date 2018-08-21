@@ -8,7 +8,7 @@ if __name__ == '__main__':
     st      = lambda delim,data         :ctx.sendthen(str(delim), str(data)) 
     sl      = lambda data               :ctx.sendline(str(data)) 
     sla     = lambda delim,data         :ctx.sendlineafter(str(delim), str(data)) 
-    sla     = lambda delim,data         :ctx.sendlinethen(str(delim), str(data)) 
+    slt     = lambda delim,data         :ctx.sendlinethen(str(delim), str(data)) 
     r       = lambda numb=4096          :ctx.recv(numb)
     ru      = lambda delims, drop=True  :ctx.recvuntil(delims, drop)
     irt     = lambda                    :ctx.interactive()
