@@ -1,7 +1,11 @@
 # Introduction
-A pwn framework aiming at eliminating dull work while scripting and debugging.
+A pwn framework(based on `pwntools`) aiming at eliminating dull work while scripting and debugging. 
 
-If you got any problem, read the code and try to solve it on you own. Then launch an issure if necessary.
+Initially designed for glibc auto loading.
+
+Best performance on `ipython`.
+
+
 
 ## Features
 - excelent context control via `ctx` for the binary and its libc
