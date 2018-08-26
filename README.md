@@ -17,6 +17,35 @@ You need to install pwntools first.
 
 `python setup.py install`
 # Usage
+## Template
+Template for quick scripting.
+```python
+from PwnContext import *
+#https://github.com/matrix1001/welpwn
+if __name__ == '__main__':
+    context.terminal = ['tmux', 'splitw', '-h']  # I always use tmux
+    context.log_level = 'debug'
+    #-----function for quick script-----#
+    s       = lambda data               :ctx.send(str(data))        #in case that data is a int
+    sa      = lambda delim,data         :ctx.sendafter(str(delim), str(data))
+    st      = lambda delim,data         :ctx.sendthen(str(delim), str(data))
+    sl      = lambda data               :ctx.sendline(str(data))
+    sla     = lambda delim,data         :ctx.sendlineafter(str(delim), str(data))
+    slt     = lambda delim,data         :ctx.sendlinethen(str(delim), str(data))
+    r       = lambda numb=4096          :ctx.recv(numb)
+    ru      = lambda delims, drop=True  :ctx.recvuntil(delims, drop)
+    irt     = lambda                    :ctx.interactive()
+
+    rs      = lambda *args, **kwargs    :ctx.start(*args, **kwargs)
+    leak    = lambda address, count=0   :ctx.leak(address, count)
+    def dbg(gdbscript='', *args, **kwargs):
+        gdbscript = sym_ctx.gdbscript + gdbscript
+        return ctx.debug(gdbscript, *args, **kwargs)
+
+    uu32    = lambda data   :u32(data.ljust(4, '\0'))
+    uu64    = lambda data   :u64(data.ljust(8, '\0'))
+
+```
 ## Basic
 ### Process
 Here's a very basic usage demo.
