@@ -3,15 +3,19 @@ from pwnlib.context import Thread
 #offline pwn framework
 
 
+INIT_FAIL = 0
+EXP_FAIL = 1
+HDL_FAIL = 2
 
 class OffPwn(object):
     def __init__(self):
         self.targets = []
         self.threaded = True
         self.exploit = lambda *args, **kwargs: None
-        self.handler = lambda *args, **kwargs: None
+        self.succ_handler = lambda *args, **kwargs: None
+        self.fail_handler = lambda *args, **kwargs: None
+        self.round_handler = lambda *args, **kwargs: None
         self.log_level = 'info'
-        self.timeout = 5
         self.interval = 60
         self.wait_thread = False
     
@@ -38,7 +42,7 @@ class OffPwn(object):
         count = 0
         while(count < times):
             count += 1
-            log.info('round %d' % count)
+            self.round_handler(count, times)
             self.run()
             sleep(self.interval)
             
@@ -46,23 +50,25 @@ class OffPwn(object):
     def routine(self, target):
         #init io
         io = self.io_init(target)
-        if io == None: return
+        if io == None: 
+            self.fail_handler(target, INIT_FAIL)
+            return
         #exploit io
         try:
             self.exploit(io)
         except Exception as e:
-            log.failure('exploit:%s:%d -> %s:%s', io.rhost, io.rport, e.__class__, e.args)
+            self.fail_handler(target, EXP_FAIL)
             return
         io.clean_and_log()
         #handle io
         try:
-            self.handler(io)
+            self.succ_handler(io)
         except Exception as e:
-            log.failure('handler:%s:%d -> %s:%s', io.rhost, io.rport, e.__class__, e.args)
+            self.fail_handler(target, HDL_FAIL)
             return
         
     def io_init(self, target):
-        context.log_level = 'error'
+        context.log_level = 50
         try:
             io = remote(target[0], target[1])
             context.log_level = self.log_level
@@ -92,21 +98,38 @@ if __name__ == '__main__':
         sl('whoami')
         ru('root')
         
-    def hdl(io):
+    def succ_hdl(io):
         io.sendline('cat /tmp/flag')
         success('%s:%d -> %s', io.rhost, io.rport, io.recv())
+    
+    fail_lst = []
+    def fail_hdl(target, typ):
+        if typ == INIT_FAIL:
+            log.critical('%s:%d unable to connect', target[0], target[1])
+        elif typ == EXP_FAIL:
+            log.warn('%s:%d exploit failed', target[0], target[1])
+        elif typ == HDL_FAIL:
+            log.critical('%s:%d succ_handler failed', target[0], target[1])
+        t = (typ, target)
+        if t not in fail_lst:
+            fail_lst.append(t)
+            
+    def round_hdl(count, times):
+        log.info('==========round %d of %d==========', count, times)
     
     context.timeout = 5
     op = OffPwn()
     op.targets = [
-        ('127.0.0.1', 1234),
-        ('127.0.0.1', 2234),
-        ('127.0.0.1', 3234),
-        ('127.0.0.1', 4234),
-        ('127.0.0.1', 5234),
+        ('127.0.0.1', 1334),
+        ('127.0.0.1', 2334),
+        ('127.0.0.1', 3334),
+        ('127.0.0.1', 4334),
+        ('127.0.0.1', 5334),
         ]
     op.exploit=exp
-    op.handler=hdl
+    op.succ_handler=succ_hdl
+    op.fail_handler=fail_hdl
+    op.round_handler=round_hdl
     #op.run()
     op.interval = 10
     op.loop(10)
