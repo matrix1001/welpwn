@@ -3,6 +3,7 @@ import roputils
 from pwnlib.context import _validator, _Tls_DictStack, _defaultdict
 from os.path import realpath  #because of some problems when using symbolic link
 from auxiliary import *
+from offpwn import *
 
 
 #wrappers

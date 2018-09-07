@@ -11,6 +11,7 @@ Best performance on `ipython`.
 - excelent context control via `ctx` for the binary and its libc
 - symbol management via `sym_ctx`(e.g. define a symbol and you can use it in gdb)
 - auxilliary functions for debug(e.g. ctx.bases['libc'] will give you the libc base address)
+- offline ctfgame pwn framework ( experimental )
 
 # Install
 You need to install pwntools first.
@@ -323,7 +324,11 @@ now you must have noticed that instruction_log shows your code and its line numb
 read the code!
 # Documention
 TODO
-# Update Log
+# Update Log Version 0.8.0
+## 2018/9/7
+- add experimental offline pwn framework, check PwnContext/offpwn.py
+- not well tested, please issue any wanted feature or bug
+
 ## 2018/5/25 Version 0.7.1
 - update README
 - add libc-database support
