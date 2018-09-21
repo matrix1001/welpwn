@@ -1,3 +1,24 @@
+# Outline
+- Introduction
+    - Feature
+- Install
+- Usage
+    - Template
+    - Basic
+        - Process
+        - Remote
+    - Advanced
+        - Vmmap
+        - Pre-brute-force
+        - GDB symbols
+    - Auxiliary
+        - auto change interpreter
+        - one_gadget
+        - libc-database
+        - instruction_log
+    - More
+- Documention
+- Update log
 # Introduction
 A pwn framework(based on `pwntools`) aiming at eliminating dull work while scripting and debugging. 
 
@@ -46,6 +67,47 @@ if __name__ == '__main__':
     uu32    = lambda data   :u32(data.ljust(4, '\0'))
     uu64    = lambda data   :u64(data.ljust(8, '\0'))
 
+```
+Template for offline attacking.
+```python
+from PwnContext import *
+if __name__ == '__main__':
+    def exp(io):
+        s       = lambda data               :io.send(str(data))        #in case that data is a int
+        sa      = lambda delim,data         :io.sendafter(str(delim), str(data), timeout=context.timeout) 
+        st      = lambda delim,data         :io.sendthen(str(delim), str(data), timeout=context.timeout) 
+        sl      = lambda data               :io.sendline(str(data)) 
+        sla     = lambda delim,data         :io.sendlineafter(str(delim), str(data), timeout=context.timeout) 
+        slt     = lambda delim,data         :io.sendlinethen(str(delim), str(data), timeout=context.timeout) 
+        r       = lambda numb=4096          :io.recv(numb)
+        ru      = lambda delims, drop=True  :io.recvuntil(delims, drop, timeout=context.timeout)
+        irt     = lambda                    :io.interactive()
+
+        uu32    = lambda data   :u32(data.ljust(4, '\0'))
+        uu64    = lambda data   :u64(data.ljust(8, '\0'))
+        
+        #sl('exit')
+        sl('whoami')
+        ru('root')
+        
+    def hdl(io):
+        io.sendline('cat /tmp/flag')
+        success('%s:%d -> %s', io.rhost, io.rport, io.recv())
+    
+    context.timeout = 5
+    op = OffPwn()
+    op.targets = [
+        ('127.0.0.1', 1234),
+        ('127.0.0.1', 2234),
+        ('127.0.0.1', 3234),
+        ('127.0.0.1', 4234),
+        ('127.0.0.1', 5234),
+        ]
+    op.exploit=exp
+    op.handler=hdl
+    #op.run()
+    op.interval = 10
+    op.loop(10)
 ```
 ## Basic
 ### Process
@@ -324,8 +386,8 @@ now you must have noticed that instruction_log shows your code and its line numb
 read the code!
 # Documention
 TODO
-# Update Log Version 0.8.0
-## 2018/9/7
+# Update Log 
+## 2018/9/7 Version 0.8.0
 - add experimental offline pwn framework, check PwnContext/offpwn.py
 - not well tested, please issue any wanted feature or bug
 
