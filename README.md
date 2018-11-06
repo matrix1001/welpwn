@@ -180,6 +180,11 @@ ELF('***/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 This will be a release a few days later.
 
 - reconstruct the framework
+  
+TODO:
+- docs
+- finish some features
+- finish readme
 
 ## 2018/9/7 Version 0.8.0
 
