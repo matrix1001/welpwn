@@ -2,14 +2,14 @@
 
 _Pwnning is an art._
 
-**welpwn** is designed to make pwnning an art, freeing you from a dozens of meaningless jobs.
+**welpwn** is designed to make pwnning an art, freeing you from dozens of meaningless jobs.
 
 ## Features
 
 - `libc address`, `heap address`, `program address` (with `PIE`), `canary`. Why gdb ? `welpwn` gives you all.
 - support glibc (2.19, 2.23-2.27), both 32bit and 64bit. Why change virtual machine ? `welpwn` handles them all.
 - trouble debugging binary without symbols ? especially with `PIE` ? `welpwn` takes care of it.
-- still manually use `libc-database` and `one_gaegets` ? `welpwn` does those for you.
+- still manually use `libc-database` and `one_gadget` ? `welpwn` does those for you.
 
 # Install
 
@@ -97,7 +97,9 @@ So, it seems rather a wraper of `process` and `remote` in pwntools. What's speci
 
 ### Pre-brute-force
 
-And there's something you may be interested if you have done some challenges about brute force.Let me show you how to do pre-brute-force before exploit(local debug). If you want to brute force heap, you will need to call malloc first.
+Still debug again and again with challenges which need brute force ? Try this.
+
+Note that `ctx.bases.heap` if available only after the process called `malloc`.
 
 ```python
 import sys
@@ -159,8 +161,6 @@ Clone `libc-database` and do this first.
 ```sh
 echo PATH_TO_LIBCDB > ~/.libcdb_path
 ```
-
-if more than one libc found, there will be a ui to ask you for choice(check code for detail).
 
 ```python
 import sys
