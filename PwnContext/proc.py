@@ -3,7 +3,8 @@ import os
 import six
 import codecs
 import struct
-'''This script is initially designed for my project `HeapInspect`. https://github.com/matrix1001/heapinspect
+'''This script is initially designed for my project `HeapInspect`.
+https://github.com/matrix1001/heapinspect
 '''
 
 

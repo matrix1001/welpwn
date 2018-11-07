@@ -1,5 +1,7 @@
 build
 dist
+.gdbhistory
 *.pyc
 */*.pyc
 *.egg-info
+a.out
