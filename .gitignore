@@ -1,6 +1,6 @@
 build
 dist
-.gdbhistory
+.gdb_history
 *.pyc
 */*.pyc
 *.egg-info

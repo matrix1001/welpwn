@@ -248,6 +248,9 @@ class PwnContext(object):
                 shutil.copy(ld_path, '/tmp/ld.so.2')
                 binary = change_ld(binary, '/tmp/ld.so.2')
 
+                # change the privilege of ld.so.2 (bug fix in 2018/11/8)
+                os.chmod('/tmp/ld.so.2', 0b111000000)
+
                 # set LD_LIBRARY_PATH
                 '''Why set LD_LIBRARY_PATH ?
                 It's for a future feature. Simply use LD_PRELOAD and change the ld can
