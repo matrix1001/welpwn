@@ -118,6 +118,15 @@ class PwnContext(object):
                 log.failure("Invalid path {} to libc".format(libc))
                 return None
             libc = ELF(libc)
+        '''bug fix(2018/11/11)
+        when the libc name is strange, `Proc` cannot find it.
+        '''
+        LIBC_REGEX = '^[^\0]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
+        if not re.match(LIBC_REGEX, libc.path):
+            log.error('Please change the libc name from {} to {}'.format(
+                os.path.basename(libc.path),
+                "libc.so | libc.so.6 | libc-2.23.so"
+            ))
         return libc
 
     @_validator
