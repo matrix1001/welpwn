@@ -37,6 +37,7 @@ Let's make a fresh start.
 
 ```python
 >>> from PwnContext.core import *
+>>> ctx = PwnContext()
 >>> ctx.binary = '/bin/sh'
 [*] '/bin/sh'
     Arch:     amd64-64-little
@@ -111,6 +112,7 @@ from PwnContext.core import *
 TEST_BIN = '/bin/cat'
 TEST_LIB = '/tmp/welpwn/PwnContext/libs/libc-2.23/64bit/libc.so.6'
 
+ctx = PwnContext()
 ctx.binary = TEST_BIN
 ctx.remote_libc = TEST_LIB
 ctx.debug_remote_libc = False # this is by default
@@ -139,6 +141,8 @@ Note that `ctx.bases.heap` is available only after the process called `malloc`.
 
 ```python
 from PwnContext.core import *
+
+ctx = PwnContext()
 ctx.binary = '/bin/sh'
 while True:
     ctx.start()
@@ -157,6 +161,7 @@ Try this.
 ```python
 from PwnContext.core import *
 
+ctx = PwnContext()
 ctx.binary = '/bin/cat'
 ctx.symbols = {'sym1':0x1234, 'sym2':0x5678}
 ctx.breakpoints = [0x1234, 0x5678]
