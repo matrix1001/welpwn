@@ -1,1 +1,1 @@
-recursive-include PwnContext/libs *.so.2 *.so.6
+recursive-include PwnContext/libs *
