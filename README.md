@@ -25,8 +25,32 @@ _Pwnning is an art._
 
 # Install
 
-```shell
+There are two ways for you to use `welpwn`.
+
+## Via Install
+
+`setup.py` has been added since version `0.9.3`. If you do not frequently update `welpwn`, and have no need for teamwork with this tool, this is the recommended way.
+
+```sh
 git clone https://github.com/matrix1001/welpwn && cd welpwn && python setup.py install
+```
+
+## Via Path
+
+This is recommended for developers and those who need to share their exploit for teamwork.
+
+```sh
+git clone https://github.com/matrix1001/welpwn && cd welpwn && python start.py
+```
+
+Then you probably get something like this.
+
+```python
+# paste these codes into your exp.py
+# https://github.com/matrix1001/welpwn # reserve this link :)
+import sys
+sys.path.insert(0,'/tmp/welpwn')
+from PwnContext.core import *
 ```
 
 # Usage
@@ -37,7 +61,6 @@ Let's make a fresh start.
 
 ```python
 >>> from PwnContext.core import *
->>> ctx = PwnContext()
 >>> ctx.binary = '/bin/sh'
 [*] '/bin/sh'
     Arch:     amd64-64-little
@@ -97,7 +120,7 @@ So, it seems rather a wrapper of `process` and `remote` in pwntools. What's spec
 
 ### Multi glibc support
 
-Make glibc loading on the fly. Mom will never worries about your glibc.
+Make glibc loading on the fly. Mom will never worry about your glibc.
 
 This feature is designed to handle the challenge that uses different glibc.
 
@@ -112,7 +135,6 @@ from PwnContext.core import *
 TEST_BIN = '/bin/cat'
 TEST_LIB = '/tmp/welpwn/PwnContext/libs/libc-2.23/64bit/libc.so.6'
 
-ctx = PwnContext()
 ctx.binary = TEST_BIN
 ctx.remote_libc = TEST_LIB
 ctx.debug_remote_libc = False # this is by default
@@ -133,6 +155,12 @@ ctx.sendline('test')
 assert ctx.recv() == 'test\n' # check if correct
 ```
 
+You may have noticed that there is a `ctx.libc` in the script. Let me explain what it does.
+
+If you are debugging the local binary, `ctx.libc` will return exactly the `ELF` object of the libc which is loaded by the binary. (system libc or remote libc)
+
+If you are exploiting remote target, it will return the `ELF` of `ctx.remote_libc`.
+
 ### Pre-brute-force
 
 Still debug again and again with challenges which need brute force ? Try this.
@@ -142,7 +170,6 @@ Note that `ctx.bases.heap` is available only after the process called `malloc`.
 ```python
 from PwnContext.core import *
 
-ctx = PwnContext()
 ctx.binary = '/bin/sh'
 while True:
     ctx.start()
@@ -161,7 +188,6 @@ Try this.
 ```python
 from PwnContext.core import *
 
-ctx = PwnContext()
 ctx.binary = '/bin/cat'
 ctx.symbols = {'sym1':0x1234, 'sym2':0x5678}
 ctx.breakpoints = [0x1234, 0x5678]
@@ -222,14 +248,9 @@ now we run it again.it will use cache to speed up
 Clone `libc-database`.
 
 ```sh
-git clone https://github.com/niklasb/libc-database
+git clone https://github.com/niklasb/libc-database && cd libc-database && ./get && echo `pwd` > ~/.libcdb_path
 ```
 
-Then do this.
-
-```sh
-echo PATH_TO_LIBCDB > ~/.libcdb_path
-```
 
 ```python
 from PwnContext.core import *
@@ -244,7 +265,7 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 
 ## 2018/11/13 Version 0.9.3
 
-- setup 
+- add `setup.py`
 
 ## 2018/11/7 Version 0.9.2
 
