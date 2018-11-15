@@ -25,21 +25,8 @@ _Pwnning is an art._
 
 # Install
 
-Install is no longer needed. If you have installed older version, use `pip uninstall welpwn` to remove it.
-
-We use `welpwn` in this way: ( I use `/tmp` for demo. Don't use that directory :)
-
-```
-tmp # pip install pwntools
-tmp # git clone https://github.com/matrix1001/welpwn && cd welpwn
-welpwn # python start.py
-
-# paste these codes into your exp.py
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-sys.path.insert(0,'/tmp/welpwn')
-from PwnContext.core import *
-
+```shell
+git clone https://github.com/matrix1001/welpwn && cd welpwn && python setup.py install
 ```
 
 # Usage
@@ -49,9 +36,8 @@ from PwnContext.core import *
 Let's make a fresh start.
 
 ```python
->>> import sys
->>> sys.path.insert(0,'/tmp/welpwn')
 >>> from PwnContext.core import *
+>>> ctx = PwnContext()
 >>> ctx.binary = '/bin/sh'
 [*] '/bin/sh'
     Arch:     amd64-64-little
@@ -120,16 +106,13 @@ If the glibc has a different version from your system's, it will get segfault wh
 Try this.
 
 ```python
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-import os
-sys.path.insert(0, os.path.abspath('/tmp/welpwn'))
 from PwnContext.core import *
 
 # note that my system libc version is 2.27
 TEST_BIN = '/bin/cat'
 TEST_LIB = '/tmp/welpwn/PwnContext/libs/libc-2.23/64bit/libc.so.6'
 
+ctx = PwnContext()
 ctx.binary = TEST_BIN
 ctx.remote_libc = TEST_LIB
 ctx.debug_remote_libc = False # this is by default
@@ -157,10 +140,9 @@ Still debug again and again with challenges which need brute force ? Try this.
 Note that `ctx.bases.heap` is available only after the process called `malloc`.
 
 ```python
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-sys.path.insert(0,'/tmp/welpwn')
 from PwnContext.core import *
+
+ctx = PwnContext()
 ctx.binary = '/bin/sh'
 while True:
     ctx.start()
@@ -177,11 +159,9 @@ Find it awful to remember those addresses ? Get tired of debugging `PIE` enabled
 Try this.
 
 ```python
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-sys.path.insert(0,'/tmp/welpwn')
 from PwnContext.core import *
 
+ctx = PwnContext()
 ctx.binary = '/bin/cat'
 ctx.symbols = {'sym1':0x1234, 'sym2':0x5678}
 ctx.breakpoints = [0x1234, 0x5678]
@@ -224,9 +204,6 @@ gem install one_gadget
 ```
 
 ```python
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-sys.path.insert(0,'/tmp/welpwn')
 from PwnContext.core import *
 print one_gadgets('/lib/x86_64-linux-gnu/libc.so.6')
 print 'now we run it again.it will use cache to speed up'
@@ -255,9 +232,6 @@ echo PATH_TO_LIBCDB > ~/.libcdb_path
 ```
 
 ```python
-# https://github.com/matrix1001/welpwn # reserve this link :)
-import sys
-sys.path.insert(0,'/tmp/welpwn')
 from PwnContext.core import *
 print libc_search({'printf':0x6b0})
 ```
@@ -267,6 +241,10 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 ```
 
 # Update Log 
+
+## 2018/11/13 Version 0.9.3
+
+- setup 
 
 ## 2018/11/7 Version 0.9.2
 
@@ -282,6 +260,7 @@ This will be a release a few days later.
 
 - reconstruct the framework
   
+
 TODO:
 - docs
 - finish some features
