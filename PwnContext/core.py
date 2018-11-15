@@ -317,6 +317,8 @@ class PwnContext(object):
                 return method
 
 
+ctx = PwnContext()
+
 
 def change_ld(binary, ld):
     '''

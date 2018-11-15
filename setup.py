@@ -4,7 +4,6 @@ setup(
     name="welpwn",
     version="0.93",
     description='Designed for eliminating dull work while pwning',
-    license='GPL',
     packages=find_packages(exclude=['tests', 'expired']),
     install_requires=['pwntools'],
     include_package_data=True,
