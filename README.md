@@ -183,6 +183,8 @@ print 'now we got libc base:', hex(ctx.bases.libc)
 
 Find it awful to remember those addresses ? Get tired of debugging `PIE` enabled program ?
 
+Now support `heap` and `libc` symbols. Just use a name start with `libc_` or `heap_`.
+
 Try this.
 
 ```python
@@ -263,6 +265,10 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 
 # Update Log 
 
+## 2018/11/22 Version 0.9.4
+
+- add support for libc/heap symbols
+ 
 ## 2018/11/13 Version 0.9.3
 
 - add `setup.py`
