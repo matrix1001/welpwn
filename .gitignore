@@ -5,3 +5,4 @@ dist
 */*.pyc
 *.egg-info
 a.out
+.idea
