@@ -55,6 +55,50 @@ from PwnContext.core import *
 
 # Usage
 
+## Template
+
+I have prepared a template for you.
+
+```sh
+python start.py --template
+```
+
+Then you get this.
+
+```python
+#https://github.com/matrix1001/welpwn
+from PwnContext import *
+if __name__ == '__main__':        
+    # context.terminal = ['tmux', 'splitw', '-h'] # uncomment this if you use tmux
+    context.log_level = 'debug'
+    # functions for quick script
+    s       = lambda data               :ctx.send(str(data))        #in case that data is an int
+    sa      = lambda delim,data         :ctx.sendafter(str(delim), str(data)) 
+    st      = lambda delim,data         :ctx.sendthen(str(delim), str(data)) 
+    sl      = lambda data               :ctx.sendline(str(data)) 
+    sla     = lambda delim,data         :ctx.sendlineafter(str(delim), str(data)) 
+    slt     = lambda delim,data         :ctx.sendlinethen(str(delim), str(data)) 
+    r       = lambda numb=4096          :ctx.recv(numb)
+    ru      = lambda delims, drop=True  :ctx.recvuntil(delims, drop)
+    irt     = lambda                    :ctx.interactive()
+    rs      = lambda *args, **kwargs    :ctx.start(*args, **kwargs)
+    leak    = lambda address, count=0   :ctx.leak(address, count)
+    dbg     = lambda *args, **kwargs    :ctx.debug(*args, **kwargs)
+    # misc functions
+    uu32    = lambda data   :u32(data.ljust(4, '\0'))
+    uu64    = lambda data   :u64(data.ljust(8, '\0'))
+
+    ctx.binary = './pwn'
+    ctx.remote_libc = './libc.so'
+    ctx.remote = ('1.1.1.1', 1111)
+    ctx.debug_remote_libc = False # True for debugging remote libc, false for local.
+
+    rs()
+    # rs('remote') # uncomment this for exploiting remote target
+
+    libc = ctx.libc # ELF object of the corresponding libc.
+```
+
 ## Basic
 
 Let's make a fresh start.
@@ -267,6 +311,7 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 
 ## 2018/11/22 Version 0.9.4
 
+- add template
 - add support for libc/heap symbols
  
 ## 2018/11/13 Version 0.9.3
