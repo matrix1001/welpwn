@@ -28,7 +28,7 @@ if __name__ == '__main__':
     irt     = lambda                    :ctx.interactive()
     rs      = lambda *args, **kwargs    :ctx.start(*args, **kwargs)
     leak    = lambda address, count=0   :ctx.leak(address, count)
-    dbg     = lambda *args, **kwargs    :ctx.debug(*args, **kwargs)
+    dbg     = lambda gdbscript='', **kwargs    :ctx.debug(gdbscript=gdbscript, **kwargs)
     # misc functions
     uu32    = lambda data   :u32(data.ljust(4, '\0'))
     uu64    = lambda data   :u64(data.ljust(8, '\0'))
