@@ -87,8 +87,9 @@ class PwnContext(object):
                 'breakpoints': [],
                }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._tls = _Tls_DictStack(_defaultdict(PwnContext.defaults))
+        self.update(kwargs)
 
     @_validator
     def binary(self, binary):
@@ -106,6 +107,17 @@ class PwnContext(object):
             binary = ELF(binary)
         context.binary = binary
         return binary
+
+    @_validator
+    def remote(self, remote_addr):
+        """tuple(ip, port): Remote address.
+        """
+        if type(remote_addr) not in [list, tuple] \
+            or len(remote_addr) != 2 \
+            or type(remote_addr[0]) != str \
+            or type(remote_addr[1]) != int:
+            raise TypeError("Need an address like ('localhost', 1234)")
+        return remote_addr
 
     @_validator
     def remote_libc(self, libc):
@@ -329,6 +341,59 @@ class PwnContext(object):
                 kwargs['gdbscript'] = gdbscript
         return gdb.attach(self.io, **kwargs)
 
+    def update(self, *args, **kwargs):
+        """
+        Convenience function, which is shorthand for setting multiple
+        variables at once.
+
+        Args:
+          kwargs: Variables to be assigned in the environment.
+        """
+        for arg in args:
+            self.update(**arg)
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
+
+    def local(self, function=None, **kwargs):
+        """local(**kwargs) -> context manager
+        Create a context manager for use with the ``with`` statement.
+        For more information, see the example below or PEP 343.
+
+        Note:
+            This function is converted from `pwntools`.
+        Args:
+          **kwargs: Variables to be assigned in the new environment.
+        Returns:
+          ContextType manager for managing the old and new environment.
+        Examples:
+            >>> ctx.remote = ('localhost', 1234)
+            True
+            >>> print ctx.remote
+            ('localhost', 1234)
+            >>> with ctx.local(remote = ('192.168.0.1', 2234)):
+            ...     print print ctx.remote
+            ('192.168.0.1', 2234)
+            >>> print ctx.remote
+            ('localhost', 1234)
+        """
+        class LocalContext(object):
+            def __enter__(a):
+                self._tls.push()
+                self.update(**{k:v for k,v in kwargs.items() if v is not None})
+                return self
+
+            def __exit__(a, *b, **c):
+                self._tls.pop()
+
+            def __call__(self, function, *a, **kw):
+                @functools.wraps(function)
+                def inner(*a, **kw):
+                    with self:
+                        return function(*a, **kw)
+                return inner
+
+        return LocalContext()
     def __getattr__(self, attr):
         """This is just a wrapper of ctx.io (process or remote)"""
         if hasattr(self.io, attr):
