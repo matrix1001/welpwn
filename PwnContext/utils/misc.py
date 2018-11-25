@@ -123,8 +123,8 @@ def addr_generator(start_ip, port, count):
     def tostr(ip):
         return '.'.join([str(_) for _ in ip])
     ip = [int(_) for _ in start_ip.split('.')]
-    addr_list = []
-    for i in range(count):
+    addr_list = [(tostr(ip), port)]
+    for i in range(count-1):
         ip[-1] += 1
         addr_list.append((tostr(ip), port))
     return addr_list
