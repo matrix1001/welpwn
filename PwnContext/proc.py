@@ -352,6 +352,26 @@ class Proc(object):
         f.close()
         return result
 
+    def write(self, addr, data):
+        '''Write to the memory of the process.
+
+        Args:
+            addr (int): The start address.
+            data (str or byte): Data to write.
+        Returns:
+            int: bytes written.
+        '''
+        mem = "/proc/{}/mem".format(self.pid)
+        f = open(mem, 'w')
+        f.seek(addr)
+        try:
+            result = f.write(data)
+        except:
+            result = 0
+            print("error writing: {}:{}".format(hex(addr), hex(size)))
+        f.close()
+        return result
+
     def search_in_prog(self, search):
         '''Search in prog.
 
@@ -401,8 +421,9 @@ class Proc(object):
             list: Search result.
         '''
         result = []
+        ignore_list = ['[vvar]', '[vsyscall]']
         for m in vmmap(self.pid):
-            if "r" in m.perm:
+            if "r" in m.perm and m.mapname not in ignore_list:
                 result += self.searchmem(m.start, m.end, search)
         return result
 

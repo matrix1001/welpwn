@@ -142,6 +142,14 @@ class PwnContext(object):
         return libc
 
     @_validator
+    def debug_remote_libc(self, value):
+        """bool: True for load process with remote_libc.
+        """
+        if type(value) != bool:
+            raise TypeError("Only support `True` or `False`")
+        return value
+
+    @_validator
     def io(self, io):
         """process or remote: IO assigned to the PwnContext.
 
@@ -461,3 +469,20 @@ def get_libc_version(path):
         return result[0]
     else:
         return ""
+
+
+def patch_environ(pid):
+    """Fix the trouble raised by change_ld. :P
+
+    Args:
+        pid(int): Pid.
+    Returns:
+        bool: True if modified. False if not found.
+    """
+    founded = False
+    p = Proc(pid)
+    result = p.search_in_stack('LD_PRELOAD=') + p.search_in_stack('LD_LIBRARY_PATH=')
+    for addr, _ in result:
+        p.write(addr, '\0')
+        founded = True
+    return founded

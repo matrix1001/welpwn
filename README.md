@@ -205,6 +205,16 @@ If you are debugging the local binary, `ctx.libc` will return exactly the `ELF` 
 
 If you are exploiting remote target, it will return the `ELF` of `ctx.remote_libc`.
 
+**Note**
+
+If you have used this feature for many times, you may find that it is a trouble when `LD_PRELOAD` or `LD_LIBRARY_PATH` pass to syscall `execve`.
+
+However, I made a fix for that.
+
+```python
+patch_environ(ctx.pid) # run this before your process runs `system` or something like `one_gadget`.
+```
+
 ### Pre-brute-force
 
 Still debug again and again with challenges which need brute force ? Try this.
