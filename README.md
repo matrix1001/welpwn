@@ -317,7 +317,12 @@ result:
 ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 ```
 
-# Update Log 
+# Update Log
+
+## 2018/11/26 Version 0.9.5
+
+- add fix for `change_ld`
+- add `addr_generator` (in `utils.misc`)
 
 ## 2018/11/22 Version 0.9.4
 
