@@ -349,6 +349,21 @@ class PwnContext(object):
                 kwargs['gdbscript'] = gdbscript
         return gdb.attach(self.io, **kwargs)
 
+    @process_only
+    def patch_environ(self):
+        """Fix the trouble raised by change_ld. :P
+
+        Returns:
+            bool: True if modified. False if not found.
+        """
+        founded = False
+        p = self.proc
+        result = p.search_in_stack('LD_PRELOAD=') + p.search_in_stack('LD_LIBRARY_PATH=')
+        for addr, _ in result:
+            p.write(addr, '\0')
+            founded = True
+        return founded
+
     def update(self, *args, **kwargs):
         """
         Convenience function, which is shorthand for setting multiple
@@ -469,20 +484,3 @@ def get_libc_version(path):
         return result[0]
     else:
         return ""
-
-
-def patch_environ(pid):
-    """Fix the trouble raised by change_ld. :P
-
-    Args:
-        pid(int): Pid.
-    Returns:
-        bool: True if modified. False if not found.
-    """
-    founded = False
-    p = Proc(pid)
-    result = p.search_in_stack('LD_PRELOAD=') + p.search_in_stack('LD_LIBRARY_PATH=')
-    for addr, _ in result:
-        p.write(addr, '\0')
-        founded = True
-    return founded

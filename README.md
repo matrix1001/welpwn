@@ -212,7 +212,7 @@ If you have used this feature for many times, you may find that it is a trouble 
 However, I made a fix for that.
 
 ```python
-patch_environ(ctx.pid) # run this before your process runs `system` or something like `one_gadget`.
+ctx.patch_environ() # run this before your process runs `system` or something like `one_gadget`.
 ```
 
 ### Pre-brute-force
@@ -304,7 +304,7 @@ now we run it again.it will use cache to speed up
 Clone `libc-database`.
 
 ```sh
-git clone https://github.com/niklasb/libc-database && cd libc-database && ./get && echo `pwd` > ~/.libcdb_path
+git clone https://github.com/niklasb/libc-database && cd libc-database && echo `pwd` > ~/.libcdb_path && ./get
 ```
 
 
