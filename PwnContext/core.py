@@ -83,6 +83,7 @@ class PwnContext(object):
                 'remote': None,
                 'remote_libc': None,
                 'debug_remote_libc': False,
+                'custom_lib_dir': None,
                 'symbols': {},
                 'breakpoints': [],
                }
@@ -147,6 +148,18 @@ class PwnContext(object):
         """
         if type(value) != bool:
             raise TypeError("Only support `True` or `False`")
+        return value
+
+    @_validator
+    def custom_lib_dir(self, value):
+        """str : Path to the custom lib dir.
+        """
+        if type(value) != str:
+            raise TypeError("A str of path is needed")
+        ld_path_32 = os.path.join(value, "ld-linux.so.2")
+        ld_path_64 = os.path.join(value, "ld-linux-x86-64.so.2")
+        if not os.access(ld_path_32, os.F_OK) and not os.access(ld_path_64, os.F_OK):
+            raise ValueError("Make sure ld-linux.so.2 or ld-linux-x86-64.so.2 is in.")
         return value
 
     @_validator
@@ -269,11 +282,22 @@ class PwnContext(object):
                     arch = '32'
                 else:
                     log.error('non supported arch')
+
+                if self.custom_lib_dir:
+                    # use custom lib. (ld.so, and others)
+                    lib_dir = self.custom_lib_dir
+                    if arch == '32':
+                        ld_path = os.path.join(lib_dir, "ld-linux.so.2")
+                    elif arch == '64':
+                        ld_path = os.path.join(lib_dir, "ld-linux-x86-64.so.2")
+                    if not os.access(ld_path, os.F_OK):
+                        raise ValueError("ld.so not founded in the lib dir. May be wrong arch.")
+                else:
+                    # default lib dir
+                    lib_dir = "{}/libs/libc-{}/{}bit/".format(cur_dir, libc_version, arch)
+                    ld_path = os.path.join(lib_dir, "ld.so.2")
+
                 # change the ld for the binary
-                ld_path = "{}/libs/libc-{}/{}bit/ld.so.2".format(
-                    cur_dir,
-                    libc_version,
-                    arch)
                 shutil.copy(ld_path, '/tmp/ld.so.2')
                 binary = change_ld(binary, '/tmp/ld.so.2')
 
@@ -287,14 +311,10 @@ class PwnContext(object):
                 libc.so.6, but also need libpthread.so......(and other libs).
                 I will add all those libs into `PwnContext/libs` to fix this problem.
                 """
-                lib_path = "{}/libs/libc-{}/{}bit/".format(
-                    cur_dir,
-                    libc_version,
-                    arch)
-                if "LD_LIBRARY_PATH" in env and lib_path not in env["LD_LIBRARY_PATH"]:
-                    env["LD_LIBRARY_PATH"] = "{}:{}".format(env["LD_LIBRARY_PATH"], lib_path)
+                if "LD_LIBRARY_PATH" in env and lib_dir not in env["LD_LIBRARY_PATH"]:
+                    env["LD_LIBRARY_PATH"] = "{}:{}".format(env["LD_LIBRARY_PATH"], lib_dir)
                 else:
-                    env["LD_LIBRARY_PATH"] = lib_path
+                    env["LD_LIBRARY_PATH"] = lib_dir
 
                 log.info("set env={} for debugging remote libc".format(env))
                 kwargs['env'] = env

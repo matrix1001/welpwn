@@ -4,7 +4,7 @@ import os
 import subprocess
 
 
-def libc_search(query, select=0):
+def libc_search(query):
     '''Search glibc in libc-database by query.
 
     Note:
@@ -28,24 +28,34 @@ def libc_search(query, select=0):
         LIBCDB_PATH = open(RECORD).read()
 
     LIBCDB_PATH = LIBCDB_PATH.strip()
-    cwd = os.getcwd()
-    os.chdir(LIBCDB_PATH)
+    FIND = os.path.join(LIBCDB_PATH, 'find')
+    DB = os.path.join(LIBCDB_PATH, 'db')
     args = ''
     for name in query:
         args += '{} {} '.format(name, hex(query[name])[2:])
-    p = os.popen('./find {}'.format(args))
+    p = os.popen('{} {}'.format(FIND, args))
     result = p.readlines()
     if len(result) == 0:
         log.failure('Unable to find libc with libc-database')
-        os.chdir(cwd)
         return None
     else:
-        if (select == 0 and len(result) > 1) or select >= len(result):
-            select = ui.options('choose a possible libc', result)
+        fmt = '[?] (libc_search) {} have been found. Choose one.\n'.format(len(result))
+        for idx, line in enumerate(result):
+            fmt += '    {}) {}'.format(idx, line)
+        choice = 0
+        while len(result) > 1:
+            print(fmt)
+            try:
+                choice = int(raw_input('Your choice ? '))
+                if choice < len(result):
+                    break
+            except ValueError:
+                continue
 
-        libc_path = './db/{}.so'.format(result[select].split()[2][:-1])
+
+        libc_name = '{}.so'.format(result[choice].split()[2][:-1])
+        libc_path = os.path.join(DB, libc_name)
         e = ELF(libc_path)
-        os.chdir(cwd)
         return e
 
 
