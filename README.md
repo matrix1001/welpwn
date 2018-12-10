@@ -207,13 +207,9 @@ If you are exploiting remote target, it will return the `ELF` of `ctx.remote_lib
 
 **Note**
 
-If you have used this feature for many times, you may find that it is a trouble when `LD_PRELOAD` or `LD_LIBRARY_PATH` pass to syscall `execve`.
+`LD_PRELOAD` and `LD_LIBRARY_PATH` are auto patched to ensure `system` is called successfully. This might affect other environmental variables. To disable this patch, you need to set `ctx.auto_patch_env` to `False`.
 
-However, I made a fix for that.
-
-```python
-ctx.patch_environ() # run this before your process runs `system` or something like `one_gadget`.
-```
+Check `ctx.patch_env`, `ctx.start` for more detail.
 
 ### Pre-brute-force
 
@@ -318,6 +314,12 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 ```
 
 # Update Log
+
+## 2018/12/10 Version 0.9.6
+
+- add support for custom libs
+- add `patch_env`
+- add `auto_patch_env`
 
 ## 2018/11/26 Version 0.9.5
 

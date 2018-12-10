@@ -83,6 +83,7 @@ class PwnContext(object):
                 'remote': None,
                 'remote_libc': None,
                 'debug_remote_libc': False,
+                'auto_patch_env': True,
                 'custom_lib_dir': None,
                 'symbols': {},
                 'breakpoints': [],
@@ -145,6 +146,14 @@ class PwnContext(object):
     @_validator
     def debug_remote_libc(self, value):
         """bool: True for load process with remote_libc.
+        """
+        if type(value) != bool:
+            raise TypeError("Only support `True` or `False`")
+        return value
+
+    @_validator
+    def auto_patch_env(self, value):
+        """bool: True for patch_environ after loaded remote libc.
         """
         if type(value) != bool:
             raise TypeError("Only support `True` or `False`")
@@ -325,6 +334,9 @@ class PwnContext(object):
                 self.io = binary.process(**kwargs)
             else:
                 log.error('invalid method {}'.format(method))
+
+            if self.auto_patch_env:
+                self.patch_environ()
 
             return self.io
 
