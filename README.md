@@ -68,6 +68,12 @@ Then you get this.
 ```python
 #https://github.com/matrix1001/welpwn
 from PwnContext import *
+
+try:
+    from IPython import embed as ipy
+except ImportError:
+    print ('IPython not installed.')
+
 if __name__ == '__main__':        
     # context.terminal = ['tmux', 'splitw', '-h'] # uncomment this if you use tmux
     context.log_level = 'debug'
@@ -97,6 +103,8 @@ if __name__ == '__main__':
     # rs('remote') # uncomment this for exploiting remote target
 
     libc = ctx.libc # ELF object of the corresponding libc.
+
+    # ipy() # if you have ipython, you can use this to check variables.
 ```
 
 ## Basic

@@ -13,6 +13,12 @@ from PwnContext.core import *
 template = '''
 #https://github.com/matrix1001/welpwn
 from PwnContext import *
+
+try:
+    from IPython import embed as ipy
+except ImportError:
+    print ('IPython not installed.')
+
 if __name__ == '__main__':        
     # context.terminal = ['tmux', 'splitw', '-h'] # uncomment this if you use tmux
     context.log_level = 'debug'
