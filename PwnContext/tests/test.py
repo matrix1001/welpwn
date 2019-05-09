@@ -72,7 +72,7 @@ then check those values, they are pre setted in ctx.symbols and ctx.breakpoints
 
 after you finished check. just exit the gdb with `q` .''')
 raw_input('press enter to continue.')
-ctx.debug()
+ctx.debug(gdbscript='echo test\\n')
 
 # libc_search and one_gadgets test
 log.info('Testing libc_search')

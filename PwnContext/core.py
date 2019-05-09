@@ -360,7 +360,6 @@ class PwnContext(object):
                 result += 'set ${}={:#x}\n'.format(key, symbols[key] + prog_base)
         for bp in breakpoints:
             result += 'b *{:#x}\n'.format(bp + prog_base)
-        print result
         return result
 
     @process_only
@@ -374,11 +373,10 @@ class PwnContext(object):
         """
         gdbscript = self.gdbscript
         if gdbscript != '':
-            log.info('Add gdbscript:\n{}'.format(gdbscript))
             if 'gdbscript' in kwargs:
-                kwargs['gdbscript'] += '\n{}'.format(gdbscript)
-            else:
-                kwargs['gdbscript'] = gdbscript
+                gdbscript += '\n' + kwargs['gdbscript']
+            kwargs['gdbscript'] = gdbscript
+            log.info('Add gdbscript:\n{}'.format(gdbscript))
         return gdb.attach(self.io, **kwargs)
 
     @process_only
