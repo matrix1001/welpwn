@@ -5,7 +5,7 @@ from PwnContext.core import *
 
 TEST_BIN = '/bin/cat'
 TEST_LIB = '../libs/libc-2.23/64bit/libc.so.6'
-TEST_LIB2 = '../libs/libc-2.25/64bit/libc.so.6'
+TEST_LIB2 = '../libs/libc-2.29/64bit/libc.so.6'
 # Initial test
 log.info('Testing basic function')
 ctx.binary = ELF(TEST_BIN)
