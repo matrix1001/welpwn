@@ -219,6 +219,46 @@ If you are exploiting remote target, it will return the `ELF` of `ctx.remote_lib
 
 Check `ctx.patch_env`, `ctx.start` for more detail.
 
+__new feature__
+
+Now support debugging glibc with symbol file. First you must download glibc binary and its symbol file.
+
+However, I've made one for you. [glibc-all-in-one](https://github.com/matrix1001/glibc-all-in-one)
+
+Follow these.
+
+```python
+from PwnContext import *
+
+ctx.binary = '/bin/sh'
+# download first
+ctx.custom_lib_dir = '/path/to/glibc-all-in-one/libs/2.23-0ubuntu3_amd64'
+# also available to use `remote_libc`
+# ctx.remote_libc = '/path/to/glibc-all-in-one/libs/2.23-0ubuntu3_amd64/libc-2.23.so'
+
+ctx.debug_remote_libc = True
+# now we start. libc.so should be loaded automatically.
+ctx.start()
+
+# now we debug.
+ctx.debug(libc_symbol_file='/path/to/glibc-all-in-one/libs/2.23-0ubuntu3_amd64/dbg/libc-2.23.so')
+```
+
+Check this.
+
+```
+pwndbg> p &main_arena 
+$3 = (malloc_state *) 0x7fdb15055b20
+pwndbg> vmmap
+......
+    0x7fdb14c92000     0x7fdb14e52000 r-xp   1c0000 0      /path/to/glibc-all-in-one/libs/2.23-0ubuntu3_amd64/libc.so.6
+......
+    0x7fdb1505b000     0x7fdb15081000 r-xp    26000 0      /tmp/ld.so.2
+......
+```
+
+Well, some of you may prefer to debug glibc with source code, then you need to compile glibc on your own. Just use `custom_lib_dir` and enjoy it. You don't need to assign `libc_symbol_file`.
+
 ### Pre-brute-force
 
 Still debug again and again with challenges which need brute force ? Try this.
@@ -322,6 +362,10 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 ```
 
 # Update Log
+
+## 2019/5/16 Version 0.9.7
+
+- add support for libc symbol file
 
 ## 2018/12/10 Version 0.9.6
 

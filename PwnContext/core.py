@@ -161,7 +161,7 @@ class PwnContext(object):
 
     @_validator
     def custom_lib_dir(self, value):
-        """str : Path to the custom lib dir.
+        """str : Path to the custom lib dir. This will make sure ld.so.2 is in. If there is libc.so.6, it will be loaded.
         """
         if type(value) != str:
             raise TypeError("A str of path is needed")
@@ -169,6 +169,10 @@ class PwnContext(object):
         ld_path_64 = os.path.join(value, "ld-linux-x86-64.so.2")
         if not os.access(ld_path_32, os.F_OK) and not os.access(ld_path_64, os.F_OK):
             raise ValueError("Make sure ld-linux.so.2 or ld-linux-x86-64.so.2 is in.")
+        libc_path = os.path.join(value, "libc.so.6")
+        if os.access(libc_path, os.F_OK):
+            log.info("libc.so.6 found in custom_lib_dir, loading now")
+            self.remote_libc = libc_path
         return value
 
     @_validator
@@ -372,6 +376,11 @@ class PwnContext(object):
             * Add support for heap symbols, libc symbols.
         """
         gdbscript = self.gdbscript
+        if 'libc_symbol_file' in kwargs:
+            libc_address = ctx.bases['libc']
+            sym_path = kwargs.pop('libc_symbol_file')
+            gdbscript += '\nsymbol-file -o {} {}\n'.format(libc_address, sym_path)
+            
         if gdbscript != '':
             if 'gdbscript' in kwargs:
                 gdbscript += '\n' + kwargs['gdbscript']
