@@ -241,7 +241,7 @@ ctx.debug_remote_libc = True
 ctx.start()
 
 # now we debug.
-ctx.debug(libc_symbol_file='/path/to/glibc-all-in-one/libs/2.23-0ubuntu3_amd64/dbg/libc-2.23.so')
+ctx.debug()
 ```
 
 Check this.
@@ -257,7 +257,7 @@ pwndbg> vmmap
 ......
 ```
 
-Well, some of you may prefer to debug glibc with source code, then you need to compile glibc on your own. Just use `custom_lib_dir` and enjoy it. You don't need to assign `libc_symbol_file`.
+Well, some of you may prefer to debug glibc with source code, then you need to compile glibc on your own. Just use `custom_lib_dir` and enjoy it.
 
 ### Pre-brute-force
 
@@ -365,7 +365,7 @@ ELF('/tmp/libc-database/db/libc6_2.19-0ubuntu6_amd64.so')
 
 ## 2019/5/16 Version 0.9.7
 
-- add support for libc symbol file
+- add support for [glibc-all-in-one](https://github.com/matrix1001/glibc-all-in-one)
 
 ## 2018/12/10 Version 0.9.6
 

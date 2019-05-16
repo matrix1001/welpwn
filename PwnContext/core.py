@@ -376,10 +376,6 @@ class PwnContext(object):
             * Add support for heap symbols, libc symbols.
         """
         gdbscript = self.gdbscript
-        if 'libc_symbol_file' in kwargs:
-            libc_address = ctx.bases['libc']
-            sym_path = kwargs.pop('libc_symbol_file')
-            gdbscript += '\nsymbol-file -o {} {}\n'.format(libc_address, sym_path)
             
         if gdbscript != '':
             if 'gdbscript' in kwargs:
