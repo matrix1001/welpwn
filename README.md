@@ -13,7 +13,7 @@ _Pwnning is an art._
     - `program address` (with `PIE`)
     - `canary`
 - Support multi glibc debugging.
-    - 2.19, 2.23-2.27 
+    - 2.19, 2.23-2.29
     - both 32bit and 64bit
 - Debug enhancement (support `PIE`).
     - symbols
