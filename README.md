@@ -162,7 +162,7 @@ print(ctx.libc.path)
 
 __Note__
 
-No 100% guarantee for successfully loading the libc. Segfault may happen due to different version of libc.so and ld.so.
+No 100% guarantee for successfully loading the libc. Segfault may happen due to different versions of libc.so and ld.so.
 
 ## `ctx.custom_lib_dir`
 
@@ -187,9 +187,9 @@ If you want to debug with source code, just compile glibc and enjoy it.
 
 ## `ctx.bases` and `ctx.canary`
 
-`ctx.bases` gives you start address of `prog`, `heap`, `libc`, `stack`.
+`ctx.bases` gives you start addresses of `prog`, `heap`, `libc`, `stack`.
 
-`ctx.canary` is a integer.
+`ctx.canary` is an integer.
 
 Note that `ctx.bases.heap` is available only after the process called `malloc`.
 
