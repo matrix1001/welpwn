@@ -23,7 +23,9 @@ _Pwnning is an art._
     - `one_gadget`
 - Heap ? Well, no support for heap analysis. But I have a gif for you. [HeapInspect](https://github.com/matrix1001/heapinspect)
 
-__[Detailed Documention](./READMORE.md)__
+__[Tutorial](https://github.com/matrix1001/interactive-pwnning-tutorial)__
+
+~~[Detailed Documention](./READMORE.md)~~
 
 # Install
 
