@@ -228,6 +228,7 @@ class PwnContext(object):
         elif isinstance(self.io, process):
             if not self.__libc or self.__libc.path != self.proc.libc:
                 self.__libc = ELF(self.proc.libc)
+            log.info('loading libc with start address: {:#x}'.format(self.__libc.address))
             return self.__libc
 
     @property
