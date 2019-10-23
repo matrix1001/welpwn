@@ -82,6 +82,7 @@ class PwnContext(object):
                 'proc': None,
                 'remote': None,
                 'remote_libc': None,
+                '__libc': None,
                 'debug_remote_libc': False,
                 'auto_patch_env': True,
                 'custom_lib_dir': None,
@@ -210,6 +211,12 @@ class PwnContext(object):
             return []
         assert type(breakpoints) == list
         return breakpoints
+    
+    @_validator
+    def __libc(self, libc):
+        """ELF: Cached libc.
+        """
+        return libc
 
     @property
     def libc(self):
@@ -219,7 +226,9 @@ class PwnContext(object):
         if isinstance(self.io, remote):
             return self.remote_libc
         elif isinstance(self.io, process):
-            return ELF(self.proc.libc)
+            if not self.__libc or self.__libc.path != self.proc.libc:
+                self.__libc = ELF(self.proc.libc)
+            return self.__libc
 
     @property
     @process_only
