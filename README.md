@@ -90,6 +90,7 @@ if __name__ == '__main__':
     # misc functions
     uu32    = lambda data   :u32(data.ljust(4, '\0'))
     uu64    = lambda data   :u64(data.ljust(8, '\0'))
+    leak    = lambda name,addr :log.success('{} = {:#x}'.format(name, addr))
 
     ctx.binary = './pwn'
     ctx.remote_libc = './libc.so'
