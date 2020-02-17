@@ -297,7 +297,7 @@ class PwnContext(object):
 
                 # codes followed change the ld
                 cur_dir = os.path.dirname(os.path.realpath(__file__))
-                libc_version = get_libc_version(path)
+                # libc_version = get_libc_version(path)
                 arch = ''
                 if self.binary.arch == 'amd64':
                     arch = '64'
@@ -315,10 +315,18 @@ class PwnContext(object):
                         ld_path = os.path.join(lib_dir, "ld-linux-x86-64.so.2")
                     if not os.access(ld_path, os.F_OK):
                         raise ValueError("ld.so not founded in the lib dir. May be wrong arch.")
+                    # set LD_LIBRARY_PATH
+                    if "LD_LIBRARY_PATH" in env and lib_dir not in env["LD_LIBRARY_PATH"]:
+                        env["LD_LIBRARY_PATH"] = "{}:{}".format(env["LD_LIBRARY_PATH"], lib_dir)
+                    else:
+                        env["LD_LIBRARY_PATH"] = lib_dir
                 else:
-                    # default lib dir
-                    lib_dir = "{}/libs/libc-{}/{}bit/".format(cur_dir, libc_version, arch)
-                    ld_path = os.path.join(lib_dir, "ld.so.2")
+                    # use preset ld.so (according to the md5sum of the libc.so.6)
+                    md5 = md5sumhex(open(path, 'rb').read())
+                    ld_path = "{}/libs/ld.so/ld-{}.so.2".format(cur_dir, md5)
+                    if not os.path.exists(ld_path):
+                        log.error('correct version of ld.so.2 for your libc is not installed')
+                    
 
                 # change the ld for the binary
                 shutil.copy(ld_path, '/tmp/ld.so.2')
@@ -327,17 +335,7 @@ class PwnContext(object):
                 # change the privilege of ld.so.2 (bug fix in 2018/11/8)
                 os.chmod('/tmp/ld.so.2', 0b111000000)
 
-                # set LD_LIBRARY_PATH
-                """Why set LD_LIBRARY_PATH ?
-                It's for a future feature. Simply use LD_PRELOAD and change the ld can
-                solve many pwn challenges. But there are some challenges not only require
-                libc.so.6, but also need libpthread.so......(and other libs).
-                I will add all those libs into `PwnContext/libs` to fix this problem.
-                """
-                if "LD_LIBRARY_PATH" in env and lib_dir not in env["LD_LIBRARY_PATH"]:
-                    env["LD_LIBRARY_PATH"] = "{}:{}".format(env["LD_LIBRARY_PATH"], lib_dir)
-                else:
-                    env["LD_LIBRARY_PATH"] = lib_dir
+                
 
                 log.info("set env={} for debugging remote libc".format(env))
                 kwargs['env'] = env
