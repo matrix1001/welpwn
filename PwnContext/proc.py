@@ -3,6 +3,7 @@ import os
 import six
 import codecs
 import struct
+import sys
 '''This script is initially designed for my project `HeapInspect`.
 https://github.com/matrix1001/heapinspect
 '''
@@ -16,7 +17,7 @@ def u64(data):
     Return:
         int: Unpacked value.
     '''
-    return struct.unpack('<Q', data.ljust(8, '\0'))[0]
+    return struct.unpack('<Q', data.ljust(8, b'\0'))[0]
 
 
 def u32(data):
@@ -27,7 +28,8 @@ def u32(data):
     Return:
         int: Unpacked value.
     '''
-    return struct.unpack('<I', data.ljust(4, '\0'))[0]
+    return struct.unpack('<I', data.ljust(4, b'\0'))[0]
+
 
 
 def get_arch(path):
@@ -46,8 +48,10 @@ def get_arch(path):
         >>> print(get_arch('./a_32bit_bin'))
         32
     '''
-    with open(path) as f:
-        arch_code = ord(f.read(0x13)[-1])
+    with open(path, 'rb') as f:
+        arch_code = f.read(0x13)[-1]
+        if type(arch_code) == str:
+            arch_code = ord(arch_code)
     x86_mcode = [3, ]  # i386 only
     x64_mcode = [62, ]  # amd64 only
     if arch_code in x86_mcode:
@@ -162,7 +166,7 @@ class Proc(object):
     def auxv(self):
         '''dict: auxv file parser.
         '''
-        content = open('/proc/{}/auxv'.format(self.pid)).read()
+        content = open('/proc/{}/auxv'.format(self.pid), 'rb').read()
         size_t = 0
         unpack = None
         if self.arch == '32':
@@ -173,7 +177,7 @@ class Proc(object):
             unpack = u64
         else:
             raise NotImplementedError('unsupported arch')
-        num = len(content) / 2 / size_t
+        num = int(len(content) / 2 / size_t)
         result = {}
         for i in range(num):
             start = i * 2 * size_t
@@ -342,7 +346,7 @@ class Proc(object):
             str: The readed memory. return '' if error.
         '''
         mem = "/proc/{}/mem".format(self.pid)
-        f = open(mem)
+        f = open(mem, 'rb')
         f.seek(addr)
         try:
             result = f.read(size)
@@ -362,13 +366,13 @@ class Proc(object):
             int: bytes written.
         '''
         mem = "/proc/{}/mem".format(self.pid)
-        f = open(mem, 'w')
+        f = open(mem, 'wb')
         f.seek(addr)
         try:
             result = f.write(data)
         except:
             result = 0
-            print("error writing: {}:{}".format(hex(addr), hex(size)))
+            print("error writing: {}:{}".format(hex(addr), hex(data)))
         f.close()
         return result
 
@@ -551,3 +555,33 @@ class Proc(object):
         data = self.read(random_addr, size_t)
         value = unpack(data) & ~0xff
         return value
+
+'''These are test code'''
+if __name__ == '__main__':
+    print('current python major version: {}'.format(sys.version_info.major))
+    # unpack testcase
+    if sys.version_info.major == 2:
+        testbytes1 = '\x01\x02\x03'
+        testbytes2 = '\x01\x02\x03\x04\x05\x06'
+    else:
+        testbytes1 = bytes([1,2,3])
+        testbytes2 = bytes([1,2,3,4,5,6])
+    print(hex(u32(testbytes1)))
+    print(hex(u64(testbytes2)))
+
+    print('testing getarch of /bin/sh: {}'.format(get_arch('/bin/sh')))
+    
+    pid = os.getpid()
+    pid = 2684
+    p = Proc(pid)
+    #print(p.path)
+    #print(p.auxv)
+    #print(p.vmmap)
+    #print(p.ranges)
+    #print(p.bases)
+    #print(p.whereis(140677294469120))
+    #print(p.read(140677294469120, 4))
+    #p.write(140677294469120, b'\x7fELF')
+    #print(p.search_in_all('0x1234'))
+    #print(p.canary)
+    #print(p.libc)
