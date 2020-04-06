@@ -12,10 +12,10 @@ from pwnlib.context import _defaultdict
 
 from pwn import *
 # implemented in proc.py
-from proc import Proc
+from PwnContext.proc import Proc
 
 # two important functions
-from utils.misc import libc_search, one_gadgets
+from PwnContext.utils.misc import libc_search, one_gadgets
 """This core script of `PwnContext` has been changed since 2018/11/6, as a result of a sky
 size big bro telling me that the usage of the script is awful.
 """
