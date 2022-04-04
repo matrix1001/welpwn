@@ -46,14 +46,14 @@ def libc_search(query):
         while len(result) > 1:
             print(fmt)
             try:
-                choice = int(raw_input('Your choice ? '))
+                choice = int(input('Your choice ? '))
                 if choice < len(result):
                     break
             except ValueError:
                 continue
 
 
-        libc_name = '{}.so'.format(result[choice].split()[2][:-1])
+        libc_name = '{}.so'.format(re.findall(r'\((.*?)\)',result[choice])[0])
         libc_path = os.path.join(DB, libc_name)
         e = ELF(libc_path)
         return e
