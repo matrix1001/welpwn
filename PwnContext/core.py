@@ -330,7 +330,7 @@ class PwnContext(object):
 
                 # change the ld for the binary
                 shutil.copy(ld_path, '/tmp/ld.so.2')
-                binary = change_ld(binary, '/tmp/ld.so.2')
+                binary = change_ld(binary, b'/tmp/ld.so.2')
 
                 # change the privilege of ld.so.2 (bug fix in 2018/11/8)
                 os.chmod('/tmp/ld.so.2', 0b111000000)
@@ -403,7 +403,7 @@ class PwnContext(object):
         p = self.proc
         result = p.search_in_stack('LD_PRELOAD=') + p.search_in_stack('LD_LIBRARY_PATH=')
         for addr, _ in result:
-            p.write(addr, '\0')
+            p.write(addr, b'\0')
             founded = True
         return founded
 
@@ -498,7 +498,7 @@ def change_ld(binary, ld):
             if size <= len(ld):
                 log.failure("Failed to change PT_INTERP from {} to {}".format(data, ld))
                 return None
-            binary.write(addr, ld.ljust(size, '\0'))
+            binary.write(addr, ld.ljust(size, b'\0'))
             if not os.access('/tmp/pwn', os.F_OK):
                 os.mkdir('/tmp/pwn')
             path = '/tmp/pwn/{}_debug'.format(os.path.basename(binary.path))
