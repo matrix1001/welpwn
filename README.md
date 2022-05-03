@@ -171,7 +171,7 @@ No 100% guarantee for successfully loading the libc. Segfault may happen due to 
 ```python
 from PwnContext.core import *
 ctx.binary = './pwn'
-ctx.custom_libc_dir = './lib/'
+ctx.custom_lib_dir = './lib/'
 ctx.debug_remote_libc = True
 ctx.start()
 print(ctx.libc.path)
